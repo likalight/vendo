@@ -16,7 +16,8 @@
     "test:all": "npm run typecheck && npm test && npm run test:finance",
     "demo:seed": "cross-env VENDO_OFFLINE=1 VENDO_DB=data/demo.db tsx scripts/seed-demo.ts",
     "demo:run": "cross-env VENDO_OFFLINE=1 VENDO_DB=data/demo.db tsx src/app.ts",
-    "buyer": "tsx scripts/buyer-agent.ts"
+    "buyer": "tsx scripts/buyer-agent.ts",
+    "demo:seller": "tsx scripts/demo-seller.ts"
   },
   "keywords": [],
   "author": "",
