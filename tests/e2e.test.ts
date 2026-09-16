@@ -266,3 +266,29 @@ test("assist: hands off a full OKX AI task brief, not just a one-liner", async (
     assert.ok(prompt.includes(field), `prompt missing ${field}`);
   }
 });
+
+test("import: a store can declare that its upstream speaks x402", async () => {
+  const r = await post("/vendo/api/businesses", {
+    id: "imported", title: "Imported x402 service",
+    description: "A service that already speaks x402 elsewhere, re-exposed by Vendo as an X Layer listing.",
+    baseUrl: "https://example.com", payTo: "0x4444444444444444444444444444444444444444",
+    ownerApproved: true, upstreamX402: true,
+    routes: [{ method: "GET", path: "/v1/thing", priceUsd: 0.02, summary: "Paid upstream", params: [] }],
+  });
+  assert.equal(r.status, 201);
+
+  // The flag has to survive the round trip, otherwise paid upstreams are silently fetched unpaid.
+  const listed = await (await get("/vendo/api/businesses")).json();
+  const imported = listed.find((b: any) => b.id === "imported");
+  assert.equal(imported.upstreamX402, true);
+
+  // And it must be a boolean, not any truthy value.
+  const bad = await post("/vendo/api/businesses", {
+    id: "imported-bad", title: "Bad flag", description: "Rejects a non-boolean upstreamX402 value outright.",
+    baseUrl: "https://example.com", payTo: "0x5555555555555555555555555555555555555555",
+    ownerApproved: true, upstreamX402: "yes",
+    routes: [{ method: "GET", path: "/v1/thing", priceUsd: 0.02, summary: "Paid upstream", params: [] }],
+  });
+  assert.equal(bad.status, 400);
+  assert.ok((await bad.json()).errors.some((e: string) => /upstreamX402/.test(e)));
+});

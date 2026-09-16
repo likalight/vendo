@@ -19,8 +19,19 @@ function isPrivate(ip: string) {
   return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
 }
 
+/**
+ * Development only: allow an http://localhost upstream so the x402 import path can be exercised
+ * against a second local instance. Never active in production, and off unless explicitly enabled.
+ */
+export function localUpstreamAllowed(u: URL) {
+  if (process.env.NODE_ENV === "production") return false;
+  if (process.env.VENDO_ALLOW_LOCAL_UPSTREAM !== "1") return false;
+  return u.hostname === "localhost" || u.hostname === "127.0.0.1";
+}
+
 export async function assertPublicHttps(url: string) {
   const u = new URL(url);
+  if (localUpstreamAllowed(u)) return u;
   if (u.protocol !== "https:") throw new Error("Only https pages are supported");
   const addrs = await lookup(u.hostname, { all: true });
   if (!addrs.length || addrs.some((a) => isPrivate(a.address))) throw new Error("That address is not on the public internet");

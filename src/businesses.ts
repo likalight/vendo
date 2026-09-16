@@ -39,6 +39,11 @@ export type Business = {
    */
   listingModel?: "self" | "managed";
   feeBps?: number;
+  /**
+   * The upstream endpoint answers 402 itself, on X Layer or another chain Vendo is funded for.
+   * Vendo pays it out of what the buyer paid, never more, and reports the cost on the response.
+   */
+  upstreamX402?: boolean;
   /** Encrypted upstream credentials (e.g. API key header). Never returned by the API. */
   secretHeaders?: string;
   /** paused stores are hidden from discovery and reject calls without charging */

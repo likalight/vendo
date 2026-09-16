@@ -34,6 +34,7 @@ import { searchServices, buildCallUrl } from "./search.js";
 import { sellerLevels } from "./levels.js";
 import { fundingPlan, usdt0Balance } from "./funding.js";
 import { validateEndpoint } from "./validate.js";
+import { fetchPaidUpstream } from "./upstream-x402.js";
 
 seedIfEmpty();
 
@@ -99,7 +100,7 @@ app.set("trust proxy", 1);
 app.use((req, res, next) => {
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-headers", "content-type, authorization, x-vendo-admin, x-vendo-assist, x-vendo-credit, payment-signature, x-payment");
-  res.setHeader("access-control-expose-headers", "x-vendo-receipt, x-vendo-credits-left, payment-required, payment-response");
+  res.setHeader("access-control-expose-headers", "x-vendo-receipt, x-vendo-credits-left, payment-required, payment-response, x-vendo-upstream-cost, x-vendo-upstream-tx, x-vendo-upstream-network");
   res.setHeader("x-content-type-options", "nosniff");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
@@ -449,8 +450,25 @@ app.all(/^\/([a-z0-9-]+)(\/.*)$/, async (req, res) => {
     await assertPublicHttps(b.baseUrl);
     const extraQ = new URLSearchParams(upstreamQuery(b)).toString();
     const upstreamUrl = b.baseUrl + realPath + (extraQ ? (qs ? `${qs}&${extraQ}` : `?${extraQ}`) : qs);
-    const up = await fetch(upstreamUrl, { method: r.method, headers: { ...upstreamHeaders(b), ...(tier ? { "x-vendo-tier": tier.name } : {}), ...(r.method === "POST" ? { "content-type": "application/json" } : {}) },
-      body: r.method === "POST" ? JSON.stringify(req.body ?? {}) : undefined });
+    const init: RequestInit = { method: r.method, headers: { ...upstreamHeaders(b), ...(tier ? { "x-vendo-tier": tier.name } : {}), ...(r.method === "POST" ? { "content-type": "application/json" } : {}) },
+      body: r.method === "POST" ? JSON.stringify(req.body ?? {}) : undefined };
+
+    // An upstream that speaks x402 has to be paid before it will answer. Vendo pays it out of
+    // what the buyer paid for this call and never exceeds it.
+    if (b.upstreamX402) {
+      const out = await fetchPaidUpstream(upstreamUrl, init, viaCredit ? price : price);
+      sale(out.status);
+      if (out.status < 400 && !viaCredit) treasury.simulateRevenue(price);
+      signed(out.status, out.body);
+      if (out.costUsd > 0) {
+        res.setHeader("x-vendo-upstream-cost", out.costUsd.toFixed(6));
+        if (out.tx) res.setHeader("x-vendo-upstream-tx", out.tx);
+        if (out.network) res.setHeader("x-vendo-upstream-network", out.network);
+      }
+      return res.status(out.status).type(out.contentType ?? "application/json").send(out.body);
+    }
+
+    const up = await fetch(upstreamUrl, init);
     const body = await up.text();
     sale(up.status);
     if (up.status < 400 && !viaCredit) treasury.simulateRevenue(price);

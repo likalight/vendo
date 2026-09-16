@@ -1,6 +1,7 @@
 import { db } from "./db.js";
 import { businesses as seeds, type Business, type SellRoute } from "./businesses.js";
 import { seal, open } from "./secrets.js";
+import { localUpstreamAllowed } from "./web-agent.js";
 
 const now = () => new Date().toISOString();
 
@@ -32,7 +33,12 @@ export function validateBusiness(input: any): { ok: true; value: Business } | { 
   if (RESERVED.has(id)) e.push(`id "${id}" is reserved`);
   if (!input?.title) e.push("title is required");
   if (!input?.description || String(input.description).length < 20) e.push("description must be at least 20 characters");
-  if (!input?.local && !/^https:\/\//.test(String(input?.baseUrl ?? ""))) e.push("baseUrl must be an https URL");
+  const baseUrlOk = (() => {
+    const raw = String(input?.baseUrl ?? "");
+    if (/^https:\/\//.test(raw)) return true;
+    try { return localUpstreamAllowed(new URL(raw)); } catch { return false; }
+  })();
+  if (!input?.local && !baseUrlOk) e.push("baseUrl must be an https URL");
   if (input?.payTo && !/^0x[0-9a-fA-F]{40}$/.test(input.payTo)) e.push("payTo must be a 0x wallet address");
   const listingModel = input?.listingModel === "managed" ? "managed" : "self";
   if (!input?.local && listingModel === "self" && !input?.payTo) e.push("Self-listed stores need the business's own receiving wallet (payTo), the one used to register on OKX AI");
@@ -46,6 +52,7 @@ export function validateBusiness(input: any): { ok: true; value: Business } | { 
     if (authType === "header" && !/^[A-Za-z0-9-]{2,60}$/.test(String(auth.headerName ?? ""))) e.push("upstreamAuth needs a header name");
     if (authType === "query" && !/^[A-Za-z0-9_.-]{1,60}$/.test(String(auth.paramName ?? ""))) e.push("upstreamAuth needs a query parameter name");
   }
+  if (input?.upstreamX402 != null && typeof input.upstreamX402 !== "boolean") e.push("upstreamX402 must be true or false");
   if (input?.ownerApproved !== true) e.push("the business owner must approve listing (ownerApproved: true)");
   const routes: SellRoute[] = Array.isArray(input?.routes) ? input.routes : [];
   if (!routes.length) e.push("at least one route is required");
@@ -76,6 +83,7 @@ export function validateBusiness(input: any): { ok: true; value: Business } | { 
       id, title: String(input.title), description: String(input.description), baseUrl: String(input.baseUrl ?? ""),
       payTo: input.payTo || undefined, licence: String(input.licence ?? "Listed with the owner's permission."),
       headers: input.headers, routes, local: !!input.local, ownerApproved: true, webForm: input.webForm,
+      upstreamX402: !!input.upstreamX402,
       listingModel, feeBps: listingModel === "managed" ? feeBps : undefined,
       secretHeaders: auth ? seal(authType === "query"
         ? { __query: JSON.stringify({ [String(auth.paramName)]: String(auth.value) }) }
