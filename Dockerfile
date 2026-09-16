@@ -8,6 +8,8 @@ RUN npm ci --ignore-scripts
 COPY tsconfig.json ./
 COPY src ./src
 COPY public ./public
+# Served at /SKILL.md so an agent can install Vendo in one paste.
+COPY skills ./skills
 RUN mkdir -p data
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s CMD node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
