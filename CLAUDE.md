@@ -16,6 +16,19 @@ Vendo is a seller toolkit for **OKX AI** ("Fiverr for AI agents"), built for OKX
 - `npm run buyer -- "sanctions screening" name="Example Trading LLC"` : live demo buyer (needs `BUYER_PRIVATE_KEY`, `VENDO_URL`)
 - `npm run demo:seed && npm run demo:run` : offline sample data for rehearsal (label as sample)
 
+## Repo
+`https://github.com/likalight/vendo` (private). CI runs typecheck, e2e and finance tests on every push.
+
+## Local setup (Windows)
+- Node 22 LTS. On Node 24 the install fails; switch with `nvm use 22.22.2`.
+- Install with `npm install --ignore-scripts`. better-sqlite3 ships its own prebuilt binary in
+  `node_modules/better-sqlite3/prebuilds/`, but npm still tries an implicit `node-gyp rebuild` that needs
+  MSVC and fails. Skipping install scripts uses the prebuilt binary and works.
+- `dev:offline` defaults to port 3000. If something else already holds it, run
+  `PORT=3100 PUBLIC_URL=http://localhost:3100 npm run dev:offline`.
+- Offline mode needs no `.env`: `src/env.ts` supplies placeholder credentials when `VENDO_OFFLINE=1`.
+- The tests spawn tsx via `process.execPath`, not `npx` (`npx` is a `.cmd` and cannot be spawned directly).
+
 ## Key files
 - `src/app.ts` server and routes; `src/registry.ts` stores, validation, tiers; `src/businesses.ts` seed services
 - `src/finance.ts` registry, sanctions, filings, invoices; `src/entity-wallets.ts` verified business wallets
