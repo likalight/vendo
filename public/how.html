@@ -1,23 +1,57 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How Vendo works</title>
 <style>
-:root{--bg:#07090D;--surface:#10151C;--line:#232A36;--ink:#E9EEF4;--muted:#8C97A8;--accent:#3DDC97}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#F5F7FA;--surface:#fff;--line:#DDE2EA;--ink:#10141B;--muted:#56607A;--accent:#0B8A57}}
-:root[data-theme="light"]{--bg:#F5F7FA;--surface:#fff;--line:#DDE2EA;--ink:#10141B;--muted:#56607A;--accent:#0B8A57}
-:root[data-theme="dark"]{--bg:#07090D;--surface:#10151C;--line:#232A36;--ink:#E9EEF4;--muted:#8C97A8;--accent:#3DDC97}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,sans-serif}
-main{max-width:920px;margin:0 auto;padding:40px 20px 60px}
-h1{font-size:2rem;margin:0 0 6px;letter-spacing:-.02em}h2{font-size:1.25rem;margin:36px 0 10px}
-p,li{color:var(--muted)}b{color:var(--ink)}code{font-size:.85rem}
-.flow{display:grid;gap:10px;margin-top:18px}
-.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
-.box b{display:block;margin-bottom:4px}
-.arrow{text-align:center;color:var(--accent);font-size:1.2rem;line-height:1}
+/* Visual language aligned with okx.ai, matching public/index.html. */
+:root{
+ --bg:#0F0F0F;--panel:#121212;--panel-2:#090909;
+ --ink:#FFFFFF;--muted:rgba(255,255,255,.70);--faint:rgba(255,255,255,.50);
+ --line:rgba(255,255,255,.10);--line-soft:rgba(255,255,255,.06);
+ --accent:#E6A7F1;--accent-line:rgba(240,171,252,.42);
+ --sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+ --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+ --r:8px;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+header{border-bottom:1px solid var(--line-soft)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:20px;max-width:960px;margin:0 auto;padding:0 24px}
+.logo{font:700 20px var(--sans);letter-spacing:-.01em;color:var(--ink)}
+.logo span{color:var(--accent)}
+.nav ul{display:flex;align-items:center;gap:28px;list-style:none;margin:0;padding:0}
+.nav ul a{font:400 14px var(--mono);color:var(--muted)}
+.nav ul a:hover{color:var(--ink);text-decoration:none}
+@media(max-width:700px){.nav ul li.opt{display:none}.nav ul{gap:18px}}
+main{max-width:960px;margin:0 auto;padding:44px 24px 72px}
+h1{font:700 clamp(30px,3.6vw,44px)/1.12 var(--sans);letter-spacing:-.015em;margin:0 0 10px}
+h2{font:700 22px var(--sans);letter-spacing:-.01em;margin:44px 0 12px}
+p,li{color:var(--muted)}b{color:var(--ink);font-weight:600}
+code{font:400 12.5px var(--mono);color:var(--accent)}
+.flow{display:grid;gap:10px;margin-top:20px}
+.box{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);padding:16px 18px}
+.box b{display:block;margin-bottom:5px;color:var(--ink)}
+.arrow{text-align:center;color:var(--faint);font:400 14px var(--mono);line-height:1}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.table{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:520px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted)}
+.table{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font:400 12px var(--mono);color:var(--faint);font-weight:400}
+tbody tr:last-child td{border-bottom:0}
+ul{padding-left:20px}
 @media(max-width:700px){.two{grid-template-columns:1fr}}
-</style></head><body><main>
+</style></head><body>
+<header><div class="nav">
+  <a class="logo" href="/">Ven<span>do</span></a>
+  <ul>
+    <li><a href="/proof">Proof</a></li>
+    <li><a href="/app">Dashboard</a></li>
+    <li class="opt"><a href="/llms.txt">For agents</a></li>
+    <li><a href="https://github.com/likalight/vendo">GitHub</a></li>
+  </ul>
+</div></header>
+<main>
 <h1>How Vendo turns a business's API into an OKX AI listing</h1>
 <p>Vendo sits between AI agents and a business's existing service. OKX provides the payment rails and the marketplace; Vendo makes them usable for a normal business.</p>
 
