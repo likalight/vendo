@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vendo · proof</title>
+<style>
+:root{--bg:#F3F4F7;--surface:#fff;--ink:#0B0E16;--muted:#5C6578;--line:#D6DAE3;--brand:#4B3FD6;--paid:#0E8A5B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07090F;--surface:#0F1422;--ink:#EEF1F7;--muted:#8B95A8;--line:#222B40;--brand:#8C82FF;--paid:#56E0A4}}
+:root[data-theme="dark"]{--bg:#07090F;--surface:#0F1422;--ink:#EEF1F7;--muted:#8B95A8;--line:#222B40;--brand:#8C82FF;--paid:#56E0A4}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Segoe UI",system-ui,sans-serif}main{max-width:1000px;margin:0 auto;padding:34px 20px}
+h1{font-size:2rem;margin:0 0 6px}.muted{color:var(--muted)}section{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px}
+.table{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:560px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted)}
+code{font-size:.8rem;word-break:break-all}.n{font-size:1.6rem;font-weight:700}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}a{color:var(--brand)}
+</style></head><body><main>
+<h1>Vendo proof</h1><p class="muted" id="sub">Live services, prices and recorded payments.</p>
+<section><div class="grid"><div><div class="n" id="stores">–</div><span class="muted">stores</span></div><div><div class="n" id="calls">–</div><span class="muted">paid calls</span></div><div><div class="n" id="rev">–</div><span class="muted">USDT0 revenue (all time)</span></div></div></section>
+<section><h2>Services</h2><div class="table"><table><thead><tr><th>Store</th><th>Endpoint</th><th>Price</th><th>Pays to</th><th>OKX AI listing</th><th>Uptime 24h</th><th>Kit</th></tr></thead><tbody id="svc"></tbody></table></div></section>
+<section><h2>Recent payments</h2><div class="table"><table><thead><tr><th>Time (UTC)</th><th>Store</th><th>Route</th><th>USDT0</th><th>Receipt</th></tr></thead><tbody id="pay"></tbody></table></div></section>
+<p class="muted">Machine-readable: <a href="/llms.txt">/llms.txt</a> · MCP server: <code>POST /mcp</code></p>
+</main><script>
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+Promise.all(['/vendo/api/config','/vendo/api/businesses','/vendo/api/sales','/vendo/api/insights'].map(u=>fetch(u).then(r=>r.json()))).then(([c,b,s,ins])=>{
+  const up=new Map(ins.uptime24h.map(u=>[u.business_id,u.uptimePct]));
+  document.getElementById('sub').textContent=`X Layer ${c.network} (chain ${c.chainId})${c.offline?' · OFFLINE DEMO — payments are simulated':''}`;
+  const ok=s.filter(x=>x.upstream_status<400);
+  document.getElementById('stores').textContent=b.length;document.getElementById('calls').textContent=ok.length;
+  document.getElementById('rev').textContent=(ok.reduce((a,x)=>a+ +x.amount_atomic,0)/1e6).toFixed(3);
+  document.getElementById('svc').innerHTML=b.flatMap(x=>x.routes.map(r=>`<tr><td>${esc(x.title)}<br><span class="muted">${esc(x.sellerLevel?.label||'New seller')}</span></td><td><code>${esc(r.method)} ${esc(c.publicUrl)}/${esc(x.id)}${esc(r.path)}</code></td><td>${r.priceUsd}${(r.tiers||[]).length?'<br><span class="muted">'+r.tiers.map(t=>esc(t.name)+' '+t.priceUsd).join(', ')+'</span>':''}</td><td><code>${esc(x.payTo)}</code></td><td>${x.listing&&x.listing.listingUrl?`<a href="${esc(x.listing.listingUrl)}">${esc(x.listing.agentId?('Agent '+x.listing.agentId):'Listing')}</a>`:esc((x.listing&&x.listing.status||'not registered').replace('_',' '))}</td><td>${up.has(x.id)?up.get(x.id)+'%':'-'}</td><td><a href="/vendo/kit/${esc(x.id)}/openapi.json">OpenAPI</a> · <a href="/vendo/kit/${esc(x.id)}/mcp.json">MCP</a></td></tr>`)).join('');
+  document.getElementById('pay').innerHTML=ok.slice(0,30).map(x=>`<tr><td>${esc(x.at.slice(0,19).replace('T',' '))}</td><td>${esc(x.business_id)}</td><td><code>${esc(x.route)}</code></td><td>${(x.amount_atomic/1e6).toFixed(3)}</td><td><code>${esc((x.receipt||'').slice(0,60))}</code></td></tr>`).join('')||'<tr><td colspan="5" class="muted">No payments yet.</td></tr>';
+});
+</script></body></html>

@@ -1,0 +1,90 @@
+/**
+ * Treasury: talks to a business's VendoVault on X Layer as the OPERATOR.
+ * The operator can only sweep to approved venues, pay approved payees within limits, pause and tighten.
+ * Offline mode keeps a simulated vault with the same rules so the dashboard can be demoed without keys.
+ */
+import { createPublicClient, createWalletClient, http, parseAbi, defineChain, type Address, toHex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { env } from "./env.js";
+
+const abi = parseAbi([
+  "function idle() view returns (uint256)",
+  "function invested() view returns (uint256)",
+  "function buffer() view returns (uint256)",
+  "function dailyLimit() view returns (uint256)",
+  "function spentToday() view returns (uint256)",
+  "function paused() view returns (bool)",
+  "function owner() view returns (address)",
+  "function operator() view returns (address)",
+  "function sweep(address venue, uint256 amount)",
+  "function recall(address venue, uint256 amount)",
+  "function payBill(address payee, uint256 amount, bytes32 ref)",
+  "function pause()",
+]);
+
+const OFFLINE = process.env.VENDO_OFFLINE === "1";
+const vaultAddress = process.env.VAULT_ADDRESS as Address | undefined;
+const chain = defineChain({
+  id: env.network.chainId, name: `X Layer ${env.networkName}`, nativeCurrency: { name: "OKB", symbol: "OKB", decimals: 18 },
+  rpcUrls: { default: { http: [process.env.XLAYER_RPC ?? (env.networkName === "mainnet" ? "https://rpc.xlayer.tech" : "https://testrpc.xlayer.tech")] } },
+});
+
+const sim = { idle: 1200e6, invested: 0, buffer: 100e6, dailyLimit: 500e6, spentToday: 0, paused: false, venues: new Set(["0xVenueUSDG"]), payees: new Map<string, number>([["0xHosting", 200e6]]) };
+export const treasuryMode = () => (OFFLINE ? "simulated" : vaultAddress ? "onchain" : "not-configured");
+
+export async function state() {
+  if (OFFLINE) return { mode: "simulated", ...sim, venues: [...sim.venues], payees: Object.fromEntries(sim.payees) };
+  if (!vaultAddress) return { mode: "not-configured", hint: "Deploy contracts/ and set VAULT_ADDRESS, OPERATOR_PRIVATE_KEY, XLAYER_RPC" };
+  const pc = createPublicClient({ chain, transport: http() });
+  const read = (fn: any) => pc.readContract({ address: vaultAddress, abi, functionName: fn }) as Promise<any>;
+  const [idle, invested, buffer, dailyLimit, spentToday, paused, owner, operator] = await Promise.all(
+    ["idle", "invested", "buffer", "dailyLimit", "spentToday", "paused", "owner", "operator"].map(read));
+  return { mode: "onchain", vault: vaultAddress, idle: Number(idle), invested: Number(invested), buffer: Number(buffer), dailyLimit: Number(dailyLimit), spentToday: Number(spentToday), paused, owner, operator, explorer: `${env.network.explorer}/address/${vaultAddress}` };
+}
+
+async function write(functionName: "sweep" | "recall" | "payBill" | "pause", args: any[]) {
+  const pk = process.env.OPERATOR_PRIVATE_KEY as `0x${string}` | undefined;
+  if (!vaultAddress || !pk) throw new Error("Set VAULT_ADDRESS and OPERATOR_PRIVATE_KEY");
+  const account = privateKeyToAccount(pk);
+  const wc = createWalletClient({ account, chain, transport: http() });
+  const pc = createPublicClient({ chain, transport: http() });
+  const { request } = await pc.simulateContract({ account, address: vaultAddress, abi, functionName, args } as any);
+  const hash = await wc.writeContract(request as any);
+  const receipt = await pc.waitForTransactionReceipt({ hash });
+  return { hash, status: receipt.status, explorer: `${env.network.explorer}/tx/${hash}` };
+}
+
+const units = (usd: number) => Math.round(usd * 1e6);
+
+export async function sweep(venue: string, usd: number) {
+  if (OFFLINE) {
+    const a = units(usd);
+    if (sim.paused) throw new Error("Vault is paused");
+    if (!sim.venues.has(venue)) throw new Error("Venue is not approved by the owner");
+    if (sim.idle - a < sim.buffer) throw new Error("That would drop cash below the buffer");
+    sim.idle -= a; sim.invested += a; return { simulated: true, action: "sweep", amount: usd };
+  }
+  return write("sweep", [venue, BigInt(units(usd))]);
+}
+
+export async function payBill(payee: string, usd: number, ref: string) {
+  if (OFFLINE) {
+    const a = units(usd), cap = sim.payees.get(payee) ?? 0;
+    if (sim.paused) throw new Error("Vault is paused");
+    if (!cap) throw new Error("Payee is not approved by the owner");
+    if (a > cap) throw new Error("Above this payee's cap");
+    if (sim.spentToday + a > sim.dailyLimit) throw new Error("Above the daily limit");
+    if (sim.idle < a) { const pull = Math.min(sim.invested, a - sim.idle); sim.invested -= pull; sim.idle += pull; }
+    if (sim.idle < a) throw new Error("Not enough funds");
+    sim.idle -= a; sim.spentToday += a; return { simulated: true, action: "payBill", payee, amount: usd, ref };
+  }
+  return write("payBill", [payee, BigInt(units(usd)), toHex(ref.slice(0, 31), { size: 32 })]);
+}
+
+export async function pause() {
+  if (OFFLINE) { sim.paused = true; return { simulated: true, action: "pause" }; }
+  return write("pause", []);
+}
+
+/** Simulated incoming revenue so the offline demo shows money arriving. */
+export function simulateRevenue(usd: number) { if (OFFLINE) sim.idle += units(usd); }

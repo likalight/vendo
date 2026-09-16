@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Vendo Assist",
+  "version": "0.2.0",
+  "description": "Find and buy agent services from the page you're on. Settles on X Layer; only reads the page when you ask.",
+  "action": { "default_popup": "popup.html", "default_title": "Vendo Assist" },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
+  "host_permissions": ["http://localhost/*", "https://*/*"],
+  "options_page": "options.html"
+}

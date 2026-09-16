@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Vendo works</title>
+<style>
+:root{--bg:#07090D;--surface:#10151C;--line:#232A36;--ink:#E9EEF4;--muted:#8C97A8;--accent:#3DDC97}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#F5F7FA;--surface:#fff;--line:#DDE2EA;--ink:#10141B;--muted:#56607A;--accent:#0B8A57}}
+:root[data-theme="light"]{--bg:#F5F7FA;--surface:#fff;--line:#DDE2EA;--ink:#10141B;--muted:#56607A;--accent:#0B8A57}
+:root[data-theme="dark"]{--bg:#07090D;--surface:#10151C;--line:#232A36;--ink:#E9EEF4;--muted:#8C97A8;--accent:#3DDC97}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,sans-serif}
+main{max-width:920px;margin:0 auto;padding:40px 20px 60px}
+h1{font-size:2rem;margin:0 0 6px;letter-spacing:-.02em}h2{font-size:1.25rem;margin:36px 0 10px}
+p,li{color:var(--muted)}b{color:var(--ink)}code{font-size:.85rem}
+.flow{display:grid;gap:10px;margin-top:18px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.box b{display:block;margin-bottom:4px}
+.arrow{text-align:center;color:var(--accent);font-size:1.2rem;line-height:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.table{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:520px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted)}
+@media(max-width:700px){.two{grid-template-columns:1fr}}
+</style></head><body><main>
+<h1>How Vendo turns a business's API into an OKX AI listing</h1>
+<p>Vendo sits between AI agents and a business's existing service. OKX provides the payment rails and the marketplace; Vendo makes them usable for a normal business.</p>
+
+<h2>The request path</h2>
+<div class="flow">
+  <div class="box"><b>1. An agent finds the listing on OKX AI</b>The listing points to a Vendo-hosted endpoint, e.g. <code>https://vendo.app/northgate-bakery/v1/catering-quote</code>.</div>
+  <div class="arrow">↓</div>
+  <div class="box"><b>2. Vendo answers with a payment request</b>Built with the OKX Payment SDK: HTTP 402 with a <code>PAYMENT-REQUIRED</code> header, priced in USDT0 on X Layer, paid to the listing owner's wallet.</div>
+  <div class="arrow">↓</div>
+  <div class="box"><b>3. The agent pays and retries</b>Its Agentic Wallet signs the payment; the OKX facilitator verifies and settles it onchain.</div>
+  <div class="arrow">↓</div>
+  <div class="box"><b>4. Vendo forwards the call to the business</b>Vendo adds the business's API key from encrypted storage and calls their real API (or submits their verified website form). Buyers never see the key.</div>
+  <div class="arrow">↓</div>
+  <div class="box"><b>5. Result returned, sale recorded</b>The agent gets the response. Vendo records the sale with its settlement proof for the books, proof page and treasury.</div>
+</div>
+
+<h2>How a business connects</h2>
+<div class="two">
+  <div class="box"><b>Has an API</b>Paste an OpenAPI link or add routes by hand. Vendo proposes which endpoints to sell, hides ones that look private, and stores any API key encrypted.</div>
+  <div class="box"><b>No API</b>Point Vendo at a booking or quote form on the business's own website. Ownership is proven with a meta tag or a file on the domain before anything goes live.</div>
+</div>
+
+<h2>Who owns the listing and the revenue</h2>
+<p>On OKX AI, whoever lists a service keeps the revenue it generates. Vendo supports both ways of working:</p>
+<div class="table"><table>
+  <thead><tr><th></th><th>Self-listed (default)</th><th>Managed by Vendo</th></tr></thead>
+  <tbody>
+    <tr><td><b>Registers on OKX AI</b></td><td>The business, with its own Agentic Wallet</td><td>Vendo</td></tr>
+    <tr><td><b>Payment goes to</b></td><td>The business's wallet, directly</td><td>Vendo's wallet</td></tr>
+    <tr><td><b>Business gets paid</b></td><td>Instantly, every call</td><td>Payouts minus Vendo's fee, tracked in Vendo</td></tr>
+    <tr><td><b>Vendo holds funds</b></td><td>Never</td><td>Until payout</td></tr>
+    <tr><td><b>Best for</b></td><td>Businesses happy to sign in with email and own their wallet</td><td>Businesses that want zero crypto setup</td></tr>
+  </tbody>
+</table></div>
+
+<h2>What stays safe</h2>
+<ul>
+  <li><b>Credentials:</b> upstream API keys are encrypted at rest and never returned by any Vendo API.</li>
+  <li><b>Consent:</b> nothing is listed without the owner's approval; website forms need domain verification.</li>
+  <li><b>Network safety:</b> Vendo only calls public https addresses, with timeouts and size limits.</li>
+  <li><b>Money:</b> in self-listed stores Vendo never touches funds. The optional vault lets automation keep a buffer and pay approved bills, but never pay unapproved addresses or raise limits.</li>
+</ul>
+
+<h2>OKX building blocks used</h2>
+<p>OKX AI (A2MCP listings), OKX Payment SDK (x402), Agentic Wallet (identity and payments), Onchain OS (registration), X Layer (USDT0 settlement and the vault contract).</p>
+</main></body></html>

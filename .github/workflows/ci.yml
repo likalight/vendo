@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:finance
+  contracts:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: contracts } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: git clone --depth 1 https://github.com/foundry-rs/forge-std lib/forge-std
+      - run: forge test -vv

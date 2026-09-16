@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vendo dashboard</title>
+<style>
+:root{--bg:#F3F4F7;--surface:#fff;--surface-2:#E9EBF1;--ink:#0B0E16;--muted:#5C6578;--line:#D6DAE3;--brand:#4B3FD6;--paid:#0E8A5B;--warn:#B4412F;--font:"Segoe UI",system-ui,-apple-system,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07090F;--surface:#0F1422;--surface-2:#161D2F;--ink:#EEF1F7;--muted:#8B95A8;--line:#222B40;--brand:#8C82FF;--paid:#56E0A4;--warn:#EF8C79}}
+:root[data-theme="dark"]{--bg:#07090F;--surface:#0F1422;--surface-2:#161D2F;--ink:#EEF1F7;--muted:#8B95A8;--line:#222B40;--brand:#8C82FF;--paid:#56E0A4;--warn:#EF8C79}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font)}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:2}
+.logo{font-weight:800;font-size:1.2rem}.logo b{color:var(--brand)}
+.badge{font-size:.78rem;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted);margin-left:8px}
+.badge.warn{color:var(--warn);border-color:var(--warn)}
+nav{display:flex;gap:4px;padding:10px 22px;overflow-x:auto;border-bottom:1px solid var(--line)}
+nav button{font:600 .9rem var(--font);background:none;border:none;color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--surface-2);color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+h2{margin:0 0 10px;font-size:1.15rem}h3{margin:14px 0 6px;font-size:1rem}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.kpi{background:var(--surface-2);border-radius:10px;padding:10px 12px}.kpi span{font-size:.8rem;color:var(--muted)}.kpi b{display:block;font-size:1.3rem;font-variant-numeric:tabular-nums}
+label{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
+input,textarea,select{width:100%;font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{min-height:70px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button.btn{font:600 .9rem var(--font);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer;margin:10px 6px 0 0}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.table{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:560px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}
+code{font-size:.82rem;word-break:break-all}
+.ok{color:var(--paid);font-weight:600}.err{color:var(--warn)}
+.pill{display:inline-block;font-size:.75rem;border-radius:999px;padding:1px 8px;background:var(--surface-2)}
+.hide{display:none}.muted{color:var(--muted)}
+.route{border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:8px}
+pre{background:var(--surface-2);border-radius:8px;padding:10px;overflow:auto;max-height:280px;font-size:.8rem}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div><span class="logo">vendo<b>.</b></span><span class="badge" id="net"></span><span class="badge" id="mode"></span></div><span><a href="/how" target="_blank" class="muted">How it works</a> &nbsp; <a href="/proof" target="_blank" class="muted">Proof page</a></span></header>
+<nav id="tabs"><button data-t="overview" class="on">Overview</button><button data-t="wizard">Create a service</button><button data-t="onboard">Advanced form</button><button data-t="website">No API? Use your website</button><button data-t="discovery">Get found</button><button data-t="treasury">Treasury</button><button data-t="books">Books</button><button data-t="assist">Assist</button><button data-t="insights">Insights</button><button data-t="kit">Agent kit</button></nav>
+<main>
+<section id="overview">
+  <div class="card"><div class="grid">
+    <div class="kpi"><span>Stores</span><b id="k-stores">–</b></div>
+    <div class="kpi"><span>Paid calls</span><b id="k-calls">–</b></div>
+    <div class="kpi"><span>Revenue this month (USDT0)</span><b id="k-rev">–</b></div>
+    <div class="kpi"><span>Assist spend (USDT0)</span><b id="k-spend">–</b></div>
+  </div></div>
+  <div class="card"><h2>Live services</h2><div class="table"><table><thead><tr><th>Store</th><th>Endpoint</th><th>Price</th><th>Score</th><th>OKX AI listing</th><th>402 check</th></tr></thead><tbody id="svc"></tbody></table></div></div>
+  <div class="card hide" id="gl"><h2 id="gl-title">Go live on OKX AI</h2><div id="gl-body"></div>
+    <h3>Save your listing</h3>
+    <div class="row"><div><label for="gl-agent">Agent ID</label><input id="gl-agent" placeholder="e.g. 12408"></div><div><label for="gl-url">Listing link</label><input id="gl-url" placeholder="https://www.okx.ai/..."></div></div>
+    <label for="gl-status">Status</label><select id="gl-status"><option value="not_registered">Not registered</option><option value="pending_review">Pending review</option><option value="live">Live</option></select>
+    <button class="btn primary" id="gl-save">Save listing</button> <span id="gl-msg"></span>
+  </div>
+  <div class="card"><h2>Latest sales</h2><div class="table"><table><thead><tr><th>Time</th><th>Store</th><th>Route</th><th>USDT0</th><th>Status</th><th>Receipt</th></tr></thead><tbody id="sales"></tbody></table></div></div>
+</section>
+
+
+<section id="wizard" class="hide">
+  <div class="card">
+    <h2>Create a service</h2>
+    <p class="muted">Four steps, like setting up a gig. Agents on OKX AI will be able to find it, pick a tier, and pay per call.</p>
+    <div class="grid" id="wz-steps" style="margin-top:10px">
+      <div class="kpi" data-s="1"><span>Step 1</span><b>Connect</b></div>
+      <div class="kpi" data-s="2"><span>Step 2</span><b>Service and tiers</b></div>
+      <div class="kpi" data-s="3"><span>Step 3</span><b>Examples</b></div>
+      <div class="kpi" data-s="4"><span>Step 4</span><b>Wallet and go live</b></div>
+    </div>
+  </div>
+
+  <div class="card wz" data-s="1">
+    <h3>Where does the data come from?</h3>
+    <label for="wz-spec">OpenAPI link (optional, fills the next steps)</label><input id="wz-spec" placeholder="https://api.yourcompany.com/openapi.json">
+    <button class="btn" id="wz-import">Import</button> <span id="wz-imsg" class="muted"></span>
+    <div class="row"><div><label for="wz-base">API base URL</label><input id="wz-base" placeholder="https://api.yourcompany.com"></div><div><label for="wz-path">Endpoint path</label><input id="wz-path" placeholder="/v1/rates"></div></div>
+    <div class="row"><div><label for="wz-autht">API key type</label><select id="wz-autht"><option value="">No key</option><option value="header">Header</option><option value="bearer">Bearer token</option><option value="query">Query parameter</option></select></div><div><label for="wz-authn">Header or parameter name</label><input id="wz-authn" placeholder="X-API-Key"></div></div>
+    <label for="wz-authv">API key value</label><input id="wz-authv" type="password" placeholder="Encrypted, never shown to buyers">
+    <div id="wz-routes"></div>
+    <button class="btn primary wz-next">Next</button>
+  </div>
+
+  <div class="card wz hide" data-s="2">
+    <h3>Describe the service</h3>
+    <div class="row"><div><label for="wz-id">Store id</label><input id="wz-id" placeholder="ratesdesk"></div><div><label for="wz-title">Service name</label><input id="wz-title" placeholder="RatesDesk benchmark rates"></div></div>
+    <label for="wz-desc">What agents get (start with a verb)</label><textarea id="wz-desc" placeholder="Look up interest rate benchmarks by currency and date, with the source and publication time."></textarea>
+    <label for="wz-summary">Short summary of the call</label><input id="wz-summary" placeholder="Benchmark rate for a currency and date">
+    <h3>Tiers</h3>
+    <p class="muted">Offer one price, or up to three tiers. Your API receives the tier in the <code>x-vendo-tier</code> header.</p>
+    <div class="table"><table><thead><tr><th>Tier</th><th>Price (USD)</th><th>What it includes</th></tr></thead><tbody>
+      <tr><td><label style="margin:0"><input type="checkbox" class="wz-ton" data-t="basic" style="width:auto"> Basic</label></td><td><input class="wz-tp" data-t="basic" type="number" step="0.001" value="0.01"></td><td><input class="wz-ti" data-t="basic" placeholder="Latest rate only"></td></tr>
+      <tr><td><label style="margin:0"><input type="checkbox" class="wz-ton" data-t="standard" checked style="width:auto"> Standard</label></td><td><input class="wz-tp" data-t="standard" type="number" step="0.001" value="0.03"></td><td><input class="wz-ti" data-t="standard" placeholder="Rate plus 30-day history"></td></tr>
+      <tr><td><label style="margin:0"><input type="checkbox" class="wz-ton" data-t="premium" style="width:auto"> Premium</label></td><td><input class="wz-tp" data-t="premium" type="number" step="0.001" value="0.08"></td><td><input class="wz-ti" data-t="premium" placeholder="Full history and source documents"></td></tr>
+    </tbody></table></div>
+    <button class="btn wz-back">Back</button><button class="btn primary wz-next">Next</button>
+  </div>
+
+  <div class="card wz hide" data-s="3">
+    <h3>Help agents understand it</h3>
+    <label for="wz-params">Inputs, one per line: name | description | example | required(yes/no)</label>
+    <textarea id="wz-params" placeholder="currency | ISO currency code | USD | yes&#10;date | Date, YYYY-MM-DD | 2026-09-15 | no"></textarea>
+    <label for="wz-example">Example call (path and query)</label><input id="wz-example" placeholder="/v1/rates?currency=USD">
+    <label for="wz-out">What the response contains</label><input id="wz-out" placeholder="JSON with rate, currency, date and source">
+    <div id="wz-score" class="muted" style="margin-top:8px"></div>
+    <button class="btn wz-back">Back</button><button class="btn primary wz-next">Next</button>
+  </div>
+
+  <div class="card wz hide" data-s="4">
+    <h3>Get paid and go live</h3>
+    <div class="row"><div><label for="wz-model">Who lists it on OKX AI?</label><select id="wz-model"><option value="self">You, with your own Agentic Wallet (paid directly)</option><option value="managed">Vendo lists it and pays you out</option></select></div><div><label for="wz-pay">Your receiving wallet</label><input id="wz-pay" placeholder="0x… used to register on OKX AI"></div></div>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--ink);margin-top:12px"><input type="checkbox" id="wz-approve" style="width:auto"> I own this service or have the owner's permission to sell it</label>
+    <button class="btn wz-back">Back</button><button class="btn primary" id="wz-create">Create, test and show go-live steps</button>
+    <div id="wz-result"></div>
+  </div>
+</section>
+
+<section id="onboard" class="hide">
+  <div class="card">
+    <h2>1. Import your API docs (optional)</h2>
+    <p class="muted">Paste an OpenAPI URL. Vendo proposes which endpoints to sell and hides ones that look private.</p>
+    <div class="row"><div><label for="spec">OpenAPI URL</label><input id="spec" placeholder="https://api.example.com/openapi.json"></div><div><label for="dprice">Default price per call (USD)</label><input id="dprice" type="number" step="0.001" value="0.01"></div></div>
+    <button class="btn" id="import">Import</button> <span id="importMsg" class="muted"></span>
+  </div>
+  <div class="card">
+    <h2>2. Store details</h2>
+    <div class="row"><div><label for="bid">Store id (URL prefix)</label><input id="bid" placeholder="northgate-bakery"></div><div><label for="btitle">Name</label><input id="btitle" placeholder="Northgate Bakery catering quotes"></div></div>
+    <label for="bdesc">What it does (for agents)</label><textarea id="bdesc" placeholder="Get a catering quote: price, portions and earliest pickup time for a given date and headcount."></textarea>
+    <div class="row"><div><label for="bbase">API base URL</label><input id="bbase" placeholder="https://api.example.com"></div><div><label for="bpay">Business receiving wallet (payTo)</label><input id="bpay" placeholder="0x… the Agentic Wallet used to register on OKX AI"></div></div>
+    <label for="blic">Licence / permission note</label><input id="blic" placeholder="Listed with the owner's permission">
+    <div class="row"><div><label for="bmodel">Who lists it on OKX AI?</label><select id="bmodel"><option value="self">The business, with its own Agentic Wallet (keeps revenue directly)</option><option value="managed">Vendo lists it and pays the business out</option></select></div><div><label for="bfee">Vendo fee for managed listings (%)</label><input id="bfee" type="number" step="0.5" value="10"></div></div>
+    <div class="row"><div><label for="bautht">API key type (optional)</label><select id="bautht"><option value="">No key</option><option value="header">Header</option><option value="bearer">Bearer token</option><option value="query">Query parameter</option></select></div><div><label for="bauthh">Header or parameter name</label><input id="bauthh" placeholder="X-API-Key or api_key"></div></div>
+    <label for="bauthv">API key value</label><input id="bauthv" type="password" placeholder="Stored encrypted, never shown to buyers">
+    <h3>Routes to sell</h3><div id="routes"></div>
+    <button class="btn" id="addRoute">Add route</button>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--ink);margin-top:14px"><input type="checkbox" id="approve" style="width:auto"> I own this service or have the owner's permission to list it</label>
+    <button class="btn primary" id="save">Publish store</button> <span id="saveMsg"></span>
+  </div>
+</section>
+
+<section id="discovery" class="hide">
+  <div class="card">
+    <h2>Agent find-test</h2>
+    <p class="muted">Five agents try a realistic task. See how many pick your listing, what's wrong, and suggested fixes.</p>
+    <div class="row"><div><label for="dbiz">Store</label><select id="dbiz"></select></div><div><label for="dtask">Task</label><input id="dtask" placeholder="convert an invoice from EUR to SGD"></div></div>
+    <button class="btn primary" id="runTest">Run find-test</button> <span id="testMode" class="muted"></span>
+    <div id="testOut"></div>
+  </div>
+</section>
+
+
+<section id="website" class="hide">
+  <div class="card">
+    <h2>Sell a form on your website</h2>
+    <p class="muted">For businesses without an API. Point Vendo at a booking or quote form on your own site, prove you own the site, and agents can use it as a paid service.</p>
+    <div class="row"><div><label for="wpage">Page with the form</label><input id="wpage" placeholder="https://yourbusiness.com/catering"></div><div><label for="wid">Store id</label><input id="wid" placeholder="northgate-bakery"></div></div>
+    <button class="btn" id="winspect">Find forms</button> <span id="wmsg" class="muted"></span>
+    <div id="wforms"></div>
+  </div>
+  <div class="card hide" id="wstep2">
+    <h2>Verify and publish</h2>
+    <p class="muted">Add this to your page's &lt;head&gt;, or serve the token at /.well-known/vendo-verify.txt on your domain.</p>
+    <pre id="wtoken"></pre>
+    <div class="row"><div><label for="wtitle">Name</label><input id="wtitle"></div><div><label for="wprice">Price per request (USD)</label><input id="wprice" type="number" step="0.001" value="0.05"></div></div>
+    <label for="wdesc">What agents get</label><textarea id="wdesc" placeholder="Submit a catering request and get the bakery's quote page back."></textarea>
+    <label for="wpay">Receiving wallet (payTo)</label><input id="wpay" placeholder="0x… (blank = default wallet)">
+    <label style="display:flex;gap:8px;align-items:center;color:var(--ink);margin-top:14px"><input type="checkbox" id="wapprove" style="width:auto"> I own this website and approve listing this form</label>
+    <button class="btn" id="wverify">Check verification</button><button class="btn primary" id="wpublish">Publish</button> <span id="wpubmsg"></span>
+  </div>
+</section>
+
+<section id="treasury" class="hide">
+  <div class="card">
+    <h2>Treasury</h2>
+    <p class="muted">Revenue sits in a vault you own. Automation keeps a cash buffer, sweeps the rest into an approved yield venue, and pays approved payees within limits. It can pause or tighten limits, never loosen them.</p>
+    <div class="grid" style="margin-top:12px">
+      <div class="kpi"><span>Cash (USDT0)</span><b id="t-idle">–</b></div>
+      <div class="kpi"><span>In yield venue</span><b id="t-inv">–</b></div>
+      <div class="kpi"><span>Buffer kept</span><b id="t-buf">–</b></div>
+      <div class="kpi"><span>Paid today / limit</span><b id="t-day">–</b></div>
+    </div>
+    <p id="t-mode" class="muted" style="margin-top:10px"></p>
+  </div>
+  <div class="card">
+    <h3>Sweep idle cash into yield</h3>
+    <div class="row"><div><label for="t-venue">Approved venue address</label><input id="t-venue" placeholder="0xVenueUSDG"></div><div><label for="t-samt">Amount (USD)</label><input id="t-samt" type="number" step="0.01" value="500"></div></div>
+    <button class="btn primary" id="t-sweep">Sweep</button>
+    <h3 style="margin-top:22px">Pay a bill</h3>
+    <div class="row"><div><label for="t-payee">Approved payee</label><input id="t-payee" placeholder="0xHosting"></div><div><label for="t-pamt">Amount (USD)</label><input id="t-pamt" type="number" step="0.01" value="120"></div></div>
+    <label for="t-ref">Reference</label><input id="t-ref" value="hosting-september">
+    <button class="btn primary" id="t-pay">Pay bill</button><button class="btn" id="t-pause">Pause automation</button>
+    <p id="t-out"></p>
+  </div>
+  <div class="card">
+    <h3>Scheduled bills</h3>
+    <p class="muted">Paid automatically from the vault when due. The vault still enforces approved payees, caps and the daily limit.</p>
+    <div class="row"><div><label for="b-payee">Approved payee</label><input id="b-payee" placeholder="0xHosting"></div><div><label for="b-amt">Amount (USD)</label><input id="b-amt" type="number" step="0.01" value="120"></div></div>
+    <div class="row"><div><label for="b-ref">Reference</label><input id="b-ref" value="hosting"></div><div><label for="b-every">Repeat every (days)</label><input id="b-every" type="number" value="30"></div></div>
+    <button class="btn primary" id="b-add">Add bill</button><button class="btn" id="b-run">Run due bills now</button> <span id="b-msg"></span>
+    <div class="table"><table><thead><tr><th>Payee</th><th>Amount</th><th>Every</th><th>Next due</th><th>Last result</th></tr></thead><tbody id="b-list"></tbody></table></div>
+  </div>
+
+</section>
+
+<section id="books" class="hide">
+  <div class="card">
+    <h2>Monthly statement</h2>
+    <div class="row"><div><label for="sbiz">Store</label><select id="sbiz"><option value="">All stores</option></select></div><div><label for="smonth">Month</label><input id="smonth" type="month"></div></div>
+    <button class="btn primary" id="loadStmt">Show statement</button><button class="btn" id="csv">Download CSV</button>
+    <div id="stmt"></div>
+  </div>
+  <div class="card"><h2>Payouts for managed stores</h2><p class="muted">When Vendo lists a store, revenue arrives in Vendo's wallet. This tracks what each business is owed after the fee.</p>
+    <div class="table"><table><thead><tr><th>Store</th><th>Revenue</th><th>Fee</th><th>Owed</th><th>Paid</th><th>Balance</th></tr></thead><tbody id="pay"></tbody></table></div>
+    <div class="row"><div><label for="po-biz">Store</label><select id="po-biz"></select></div><div><label for="po-amt">Amount paid (USD)</label><input id="po-amt" type="number" step="0.01"></div></div>
+    <label for="po-tx">Payout transaction hash</label><input id="po-tx" placeholder="0x…">
+    <button class="btn primary" id="po-save">Record payout</button> <span id="po-msg"></span>
+  </div>
+  <div class="card"><h2>Assist purchases (costs)</h2><div class="table"><table><thead><tr><th>Time</th><th>Service</th><th>USDT0</th><th>Status</th><th>Settlement</th></tr></thead><tbody id="purch"></tbody></table></div></div>
+</section>
+
+<section id="assist" class="hide">
+  <div class="card">
+    <h2>Vendo Assist console</h2>
+    <p class="muted">Same backend as the browser extension. Describe a task or paste text from a page.</p>
+    <textarea id="atext" placeholder='Is "Apple Inc." a registered company? / Convert EUR to USD / Catering quote for 40 people'></textarea>
+    <button class="btn primary" id="amatch">Find a service</button> <span id="amode" class="muted"></span>
+    <div id="aoffers"></div>
+  </div>
+</section>
+
+
+<section id="insights" class="hide">
+  <div class="card">
+    <h2>Repeat buyers</h2>
+    <p class="muted">OKX AI grows on repeat usage. See how many agents come back to each store.</p>
+    <div class="table"><table><thead><tr><th>Store</th><th>Buyers</th><th>Repeat buyers</th><th>Repeat rate</th><th>Came back after a day</th></tr></thead><tbody id="ret"></tbody></table></div>
+  </div>
+  <div class="card">
+    <h2>Uptime</h2>
+    <p class="muted">Vendo checks each store's API or form regularly, so problems are fixed before agents run into them.</p>
+    <div class="table"><table><thead><tr><th>Store</th><th>24h uptime</th><th>7d uptime</th><th>Avg response</th><th>Last check</th></tr></thead><tbody id="up"></tbody></table></div>
+    <button class="btn" id="runHealth">Run checks now</button> <span id="hmsg" class="muted"></span>
+  </div>
+  <div class="card">
+    <h2>Connect agents with MCP</h2>
+    <p class="muted">One MCP server exposes every Vendo store as a tool. Paid tools return a payment request that the agent's wallet can pay.</p>
+    <pre id="mcpSnippet"></pre>
+  </div>
+</section>
+
+<section id="kit" class="hide">
+  <div class="card"><h2>Agent-ready kit</h2><p class="muted">Machine-readable descriptions agents and marketplaces can use.</p><div id="kitList"></div></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const adminH=()=>{const t=sessionStorage.getItem('vendoAdmin');return t?{'x-vendo-admin':t}:{};};
+async function api(p,o={}){
+  const r=await fetch(p,{...o,headers:{...(o.headers||{}),...adminH()}});
+  if(r.status===401){const t=prompt('Admin token for this Vendo server');if(t){sessionStorage.setItem('vendoAdmin',t);return api(p,o);}}
+  return r.json();
+}
+const post=(p,b)=>api(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let CFG={},BIZ=[];
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hide',s.id!==b.dataset.t));});
+$('#smonth').value=new Date().toISOString().slice(0,7);
+
+async function load(){
+  CFG=await api('/vendo/api/config'); BIZ=await api('/vendo/api/businesses');
+  $('#net').textContent=`X Layer ${CFG.network} · ${CFG.chainId}`;
+  $('#mode').textContent=CFG.offline?'offline demo (no real payments)':'live payments'; $('#mode').classList.toggle('warn',CFG.offline);
+  const sales=await api('/vendo/api/sales'), purch=await api('/vendo/api/purchases'), st=await api('/vendo/api/statement');
+  $('#k-stores').textContent=BIZ.length; $('#k-calls').textContent=sales.filter(s=>s.upstream_status<400).length;
+  $('#k-rev').textContent=st.totals.revenueUsdt0.toFixed(3); $('#k-spend').textContent=st.totals.costsUsdt0.toFixed(3);
+  $('#svc').innerHTML=BIZ.flatMap(b=>b.routes.map(r=>{const url=`${CFG.publicUrl}/${b.id}${r.sampleRequest}`;return `<tr><td>${esc(b.title)}${b.local?' <span class="pill">Vendo</span>':''}</td><td><code>${esc(r.method)} ${esc(url)}</code></td><td>${r.priceUsd}${(r.tiers||[]).length?`<br><span class="muted">${r.tiers.map(x=>esc(x.name)+' '+x.priceUsd).join(' · ')}</span>`:''}</td><td>${b.score}<br><span class="pill">${esc(b.sellerLevel?.label||'New seller')}</span></td><td><span class="pill">${esc((b.listing?.status||'not_registered').replace('_',' '))}</span> <span class="muted">${b.listingModel==='managed'?'managed':'self'}</span><br><button class="btn golive" style="margin:4px 0 0" data-id="${esc(b.id)}">Go live</button> <button class="btn tst" style="margin:4px 0 0" data-id="${esc(b.id)}">Test</button> <button class="btn pz" style="margin:4px 0 0" data-id="${esc(b.id)}" data-s="${b.status==='paused'?'active':'paused'}">${b.status==='paused'?'Resume':'Pause'}</button>${b.status==='paused'?' <span class="err">paused</span>':''}</td><td><button class="btn chk" style="margin:0" data-u="${esc(url)}">Check</button></td></tr>`})).join('');
+  document.querySelectorAll('#svc .golive').forEach(b=>b.onclick=()=>goLive(b.dataset.id));
+  document.querySelectorAll('#svc .pz').forEach(b=>b.onclick=async()=>{await post(`/vendo/api/businesses/${b.dataset.id}/status`,{status:b.dataset.s});load();});
+  document.querySelectorAll('#svc .tst').forEach(b=>b.onclick=async()=>{b.textContent='Testing…';const r=await post(`/vendo/api/businesses/${b.dataset.id}/test`,{});b.outerHTML=r.pass?'<span class="ok">Test passed</span>':`<span class="err" title="${esc(JSON.stringify(r))}">Test failed</span>`;});
+  document.querySelectorAll('#svc .chk').forEach(btn=>btn.onclick=async()=>{const r=await post('/vendo/api/check402',{url:btn.dataset.u});btn.outerHTML=r.status===402?`<span class="ok">402${r.paymentRequiredHeader?' + header':''}</span>`:`<span class="err">${r.status}</span>`;});
+  $('#sales').innerHTML=sales.slice(0,20).map(s=>`<tr><td>${esc(s.at.slice(0,19).replace('T',' '))}</td><td>${esc(s.business_id)}</td><td><code>${esc(s.route)}</code></td><td>${(s.amount_atomic/1e6).toFixed(3)}</td><td>${s.upstream_status}</td><td><code>${esc((s.receipt||'').slice(0,40))}</code></td></tr>`).join('')||'<tr><td colspan="6" class="muted">No sales yet. Run a paid call or try Assist.</td></tr>';
+  $('#purch').innerHTML=purch.slice(0,20).map(p=>`<tr><td>${esc(p.at.slice(0,19).replace('T',' '))}</td><td><code>${esc(p.service)}</code></td><td>${(p.amount_atomic/1e6).toFixed(3)}</td><td>${p.status}</td><td><code>${esc((p.settlement||'').slice(0,40))}</code></td></tr>`).join('')||'<tr><td colspan="5" class="muted">No purchases yet.</td></tr>';
+  const opts=BIZ.map(b=>`<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('');
+  $('#dbiz').innerHTML=BIZ.filter(b=>!b.local).map(b=>`<option value="${esc(b.id)}">${esc(b.title)}</option>`).join(''); $('#sbiz').innerHTML='<option value="">All stores</option>'+opts;
+  $('#kitList').innerHTML=`<p><a href="/llms.txt" target="_blank">/llms.txt</a> (all services)</p>`+BIZ.map(b=>`<p><b>${esc(b.title)}</b> · <a target="_blank" href="/vendo/kit/${b.id}/openapi.json">OpenAPI</a> · <a target="_blank" href="/vendo/kit/${b.id}/mcp.json">MCP tools</a></p>`).join('');
+}
+
+function routeRow(r={method:'GET',path:'',priceUsd:+$('#dprice').value||0.01,summary:'',params:[],sampleRequest:'',sampleResponseNote:''},on=true){
+  const d=document.createElement('div');d.className='route';d._params=r.params||[];
+  d.innerHTML=`<label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink)"><input type="checkbox" class="use" style="width:auto" ${on?'checked':''}> Sell this route ${r.note?`<span class="err">· ${esc(r.note)}</span>`:''}</label>
+  <div class="row"><div><label>Method</label><select class="m"><option ${r.method==='GET'?'selected':''}>GET</option><option ${r.method==='POST'?'selected':''}>POST</option></select></div><div><label>Path</label><input class="p" value="${esc(r.path)}" placeholder="/v1/catering-quote"></div></div>
+  <div class="row"><div><label>Summary</label><input class="s" value="${esc(r.summary)}"></div><div><label>Price (USD)</label><input class="pr" type="number" step="0.001" value="${r.priceUsd}"></div></div>
+  <div class="row"><div><label>Example request</label><input class="ex" value="${esc(r.sampleRequest)}"></div><div><label>What it returns</label><input class="out" value="${esc(r.sampleResponseNote)}"></div></div>`;
+  $('#routes').appendChild(d);
+}
+$('#addRoute').onclick=()=>routeRow();
+$('#import').onclick=async()=>{
+  $('#importMsg').textContent='Importing…';
+  const r=await post('/vendo/api/import-openapi',{specUrl:$('#spec').value,priceUsd:+$('#dprice').value});
+  if(r.errors){$('#importMsg').innerHTML=`<span class="err">${esc(r.errors.join('; '))}</span>`;return;}
+  $('#btitle').value=r.title;$('#bdesc').value=(r.description||'').slice(0,400);$('#bbase').value=r.baseUrl;$('#routes').innerHTML='';
+  r.routes.forEach(x=>routeRow(x,x.recommended));$('#importMsg').textContent=`${r.routes.length} routes found, ${r.routes.filter(x=>x.recommended).length} recommended.`;
+};
+$('#save').onclick=async()=>{
+  const routes=[...document.querySelectorAll('#routes .route')].filter(d=>d.querySelector('.use').checked).map(d=>({method:d.querySelector('.m').value,path:d.querySelector('.p').value,summary:d.querySelector('.s').value,priceUsd:+d.querySelector('.pr').value,sampleRequest:d.querySelector('.ex').value,sampleResponseNote:d.querySelector('.out').value,params:d._params}));
+  const at=$('#bautht').value;const auth=at&&$('#bauthv').value?{type:at,headerName:$('#bauthh').value.trim(),paramName:$('#bauthh').value.trim(),value:$('#bauthv').value}:undefined;
+  const r=await post('/vendo/api/businesses',{id:$('#bid').value.trim(),title:$('#btitle').value,description:$('#bdesc').value,baseUrl:$('#bbase').value,payTo:$('#bpay').value||undefined,licence:$('#blic').value,ownerApproved:$('#approve').checked,listingModel:$('#bmodel').value,feeBps:Math.round(+$('#bfee').value*100),upstreamAuth:auth,routes});
+  $('#saveMsg').innerHTML=r.errors?`<span class="err">${esc(r.errors.join('; '))}</span>`:`<span class="ok">Store created.</span> ${r.endpoints.map(e=>`<br><code>${esc(e)}</code>`).join('')}`;
+  if(!r.errors){$('#bauthv').value='';await load();goLive(r.business.id);}
+};
+$('#runTest').onclick=async()=>{
+  $('#testOut').innerHTML='<p class="muted">Running…</p>';
+  const r=await post('/vendo/api/discovery/'+$('#dbiz').value,{task:$('#dtask').value});
+  const t=r.test;$('#testMode').textContent=`mode: ${t.mode}`;
+  $('#testOut').innerHTML=`<div class="grid" style="margin-top:12px"><div class="kpi"><span>Agents who picked it</span><b>${t.chosen} / ${t.agents}</b></div><div class="kpi"><span>Discoverability score</span><b>${t.score}</b></div></div>
+  <h3>Agent picks</h3><div class="table"><table><tbody>${t.picks.map(p=>`<tr><td>${esc(p.agent)}</td><td>${esc(p.picked)}</td><td class="muted">${esc(p.reason)}</td></tr>`).join('')}</tbody></table></div>
+  <h3>Issues</h3>${t.issues.length?t.issues.map(i=>`<p><b>${esc(i.issue)}</b><br><span class="muted">${esc(i.fix)}</span></p>`).join(''):'<p class="ok">No issues found.</p>'}
+  <h3>Suggested listing (${esc(r.fixes.mode)})</h3><pre>${esc(JSON.stringify(r.fixes,null,2))}</pre>`;
+};
+$('#loadStmt').onclick=async()=>{const s=await api(`/vendo/api/statement?month=${$('#smonth').value}&business=${$('#sbiz').value}`);
+  $('#stmt').innerHTML=`<div class="grid" style="margin-top:12px"><div class="kpi"><span>Revenue</span><b>${s.totals.revenueUsdt0}</b></div><div class="kpi"><span>Costs</span><b>${s.totals.costsUsdt0}</b></div><div class="kpi"><span>Net</span><b>${s.totals.netUsdt0}</b></div></div>
+  <div class="table"><table><thead><tr><th>Type</th><th>Item</th><th>Calls</th><th>USDT0</th></tr></thead><tbody>${s.revenue.map(r=>`<tr><td>Revenue</td><td><code>${esc(r.business_id)} ${esc(r.route)}</code></td><td>${r.calls}</td><td>${r.usdt0}</td></tr>`).join('')}${s.costs.map(r=>`<tr><td>Cost</td><td><code>${esc(r.service)}</code></td><td>${r.calls}</td><td>-${r.usdt0}</td></tr>`).join('')}</tbody></table></div>`;};
+$('#csv').onclick=async()=>{const r=await fetch(`/vendo/api/statement?format=csv&month=${$('#smonth').value}&business=${$('#sbiz').value}`,{headers:adminH()});const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`vendo-${$('#smonth').value}.csv`;a.click();};
+$('#amatch').onclick=async()=>{
+  $('#aoffers').innerHTML='<p class="muted">Matching…</p>';
+  const r=await post('/vendo/assist/match',{text:$('#atext').value});$('#amode').textContent=`mode: ${r.mode}`;
+  if(!r.offers.length){$('#aoffers').innerHTML=`<p class="muted">No per-request service matches. For a bigger or custom job, post it to OKX AI's task matching with your agent:</p><pre>${esc(r.okxTaskPrompt)}</pre>`;return;}
+  $('#aoffers').innerHTML=r.offers.map((o,i)=>`<div class="route"><b>${esc(o.title)}</b> · ${esc(o.summary)} · <b>${o.priceUsd} USDT0</b><br><code>${esc(o.url)}</code><br><button class="btn primary" data-i="${i}">Run it</button><div class="res"></div></div>`).join('');
+  document.querySelectorAll('#aoffers button').forEach(b=>b.onclick=async()=>{const o=r.offers[b.dataset.i];b.disabled=true;b.textContent='Running…';
+    const x=await post('/vendo/assist/run',{url:o.url,serviceKey:o.serviceKey});b.remove();
+    b.parentElement?.querySelector('.res');const res=document.querySelectorAll('#aoffers .res')[b.dataset.i];
+    res.innerHTML=(x.paid?`<p class="ok">Paid ${x.priceUsdt0} USDT0${x.offline?' (offline demo)':''}</p>`:`<p class="err">${esc(x.error||('Status '+x.status))}</p>`)+`<pre>${esc(JSON.stringify(x.body??x,null,2)).slice(0,3000)}</pre>`;load();});
+};
+
+let WFORMS=[],WFORM=null;
+$('#winspect').onclick=async()=>{
+  $('#wmsg').textContent='Reading page…';$('#wforms').innerHTML='';
+  const r=await post('/vendo/api/web/inspect',{pageUrl:$('#wpage').value});
+  if(r.errors){$('#wmsg').innerHTML=`<span class="err">${esc(r.errors.join('; '))}</span>`;return;}
+  WFORMS=r.forms;$('#wmsg').textContent=`${r.forms.length} form(s) found on "${r.title||'page'}"`;
+  $('#wforms').innerHTML=r.forms.map((f,i)=>`<div class="route"><b>${esc(f.method)} ${esc(f.action)}</b><br><span class="muted">${f.fields.map(x=>esc(x.label)+(x.required?' *':'')).join(', ')}</span><br><button class="btn" data-i="${i}">Use this form</button></div>`).join('')||'<p class="muted">No usable forms on that page.</p>';
+  document.querySelectorAll('#wforms button').forEach(b=>b.onclick=async()=>{
+    WFORM=WFORMS[b.dataset.i];$('#wstep2').classList.remove('hide');$('#wtitle').value=r.title||'';
+    const tk=await post('/vendo/api/web/token',{id:$('#wid').value.trim(),pageUrl:$('#wpage').value});
+    $('#wtoken').textContent=tk.token?`<meta name="vendo-verify" content="${tk.token}">`:'Enter a store id first';
+  });
+};
+$('#wverify').onclick=async()=>{const v=await post('/vendo/api/web/verify',{id:$('#wid').value.trim(),pageUrl:$('#wpage').value});$('#wpubmsg').innerHTML=v.verified?`<span class="ok">Verified via ${esc(v.method)}</span>`:`<span class="err">${esc((v.errors||['Not verified yet']).join('; '))}</span>`;};
+$('#wpublish').onclick=async()=>{
+  const r=await post('/vendo/api/web/publish',{id:$('#wid').value.trim(),title:$('#wtitle').value,description:$('#wdesc').value,payTo:$('#wpay').value||undefined,priceUsd:+$('#wprice').value,form:WFORM,ownerApproved:$('#wapprove').checked,skipVerify:CFG.offline});
+  $('#wpubmsg').innerHTML=r.errors?`<span class="err">${esc(r.errors.join('; '))}</span>`:`<span class="ok">Published.</span><br><code>${esc(r.endpoint)}</code>`;if(!r.errors)load();
+};
+
+const usd=a=>(a/1e6).toLocaleString(undefined,{maximumFractionDigits:2});
+async function loadTreasury(){
+  const s=await api('/vendo/api/treasury');
+  if(s.mode==='not-configured'){$('#t-mode').textContent=s.hint;return;}
+  $('#t-idle').textContent=usd(s.idle);$('#t-inv').textContent=usd(s.invested);$('#t-buf').textContent=usd(s.buffer);$('#t-day').textContent=`${usd(s.spentToday)} / ${usd(s.dailyLimit)}`;
+  $('#t-mode').innerHTML=s.mode==='simulated'?'<span class="err">Simulated vault (offline demo)</span>':`Onchain vault <a target="_blank" href="${esc(s.explorer)}">${esc(s.vault)}</a>${s.paused?' · <span class="err">paused</span>':''}`;
+}
+async function tAction(path,body){const r=await post(path,body);$('#t-out').innerHTML=r.errors?`<span class="err">${esc(r.errors.join('; '))}</span>`:`<span class="ok">Done.</span> ${r.explorer?`<a target="_blank" href="${esc(r.explorer)}">View transaction</a>`:''}`;loadTreasury();}
+$('#t-sweep').onclick=()=>tAction('/vendo/api/treasury/sweep',{venue:$('#t-venue').value,amountUsd:+$('#t-samt').value});
+$('#t-pay').onclick=()=>tAction('/vendo/api/treasury/pay',{payee:$('#t-payee').value,amountUsd:+$('#t-pamt').value,ref:$('#t-ref').value});
+$('#t-pause').onclick=()=>tAction('/vendo/api/treasury/pause',{});
+document.querySelector('[data-t="treasury"]').addEventListener('click',loadTreasury);
+
+let GL=null;
+async function goLive(id){
+  GL=id;const g=await api(`/vendo/api/businesses/${id}/go-live`);
+  document.querySelector('[data-t="overview"]').click();$('#gl').classList.remove('hide');
+  $('#gl-title').textContent=`Go live on OKX AI: ${g.store}`;
+  $('#gl-body').innerHTML=`<p class="muted">Listing owner: <b>${esc(g.listingOwner)}</b>. Receiving wallet: <code>${esc(g.receivingWallet)}</code></p>`+
+    g.steps.map((s,i)=>`<div class="route"><b>${i+1}. ${esc(s.step)}</b>${s.note?`<br><span class="muted">${esc(s.note)}</span>`:''}${s.prompt?`<pre>${esc(s.prompt)}</pre>`:''}${s.command?`<pre>${esc(s.command)}</pre><span class="muted">Expect ${esc(s.expect)}</span>`:''}${s.prompts?s.prompts.map(p=>`<pre>${esc(p)}</pre>`).join(''):''}</div>`).join('');
+  $('#gl-agent').value=g.listing.agentId||'';$('#gl-url').value=g.listing.listingUrl||'';$('#gl-status').value=g.listing.status||'not_registered';
+  $('#gl').scrollIntoView({behavior:'smooth'});
+}
+$('#gl-save').onclick=async()=>{const r=await post(`/vendo/api/businesses/${GL}/listing`,{agentId:$('#gl-agent').value,listingUrl:$('#gl-url').value,status:$('#gl-status').value});$('#gl-msg').innerHTML=r.errors?`<span class="err">${esc(r.errors.join('; '))}</span>`:'<span class="ok">Saved.</span>';load();};
+async function loadPayouts(){
+  const p=await api('/vendo/api/payouts');
+  $('#pay').innerHTML=p.summary.map(x=>`<tr><td>${esc(x.title)}</td><td>${x.revenueUsdt0}</td><td>${x.feeUsdt0} (${x.feeBps/100}%)</td><td>${x.owedUsdt0}</td><td>${x.paidUsdt0}</td><td><b>${x.balanceUsdt0}</b></td></tr>`).join('')||'<tr><td colspan="6" class="muted">No managed stores yet.</td></tr>';
+  $('#po-biz').innerHTML=p.summary.map(x=>`<option value="${esc(x.business_id)}">${esc(x.title)}</option>`).join('');
+}
+$('#po-save').onclick=async()=>{const r=await post('/vendo/api/payouts',{business:$('#po-biz').value,amountUsd:+$('#po-amt').value,txHash:$('#po-tx').value||undefined});$('#po-msg').innerHTML=r.errors?`<span class="err">${esc(r.errors.join('; '))}</span>`:'<span class="ok">Recorded.</span>';loadPayouts();};
+document.querySelector('[data-t="books"]').addEventListener('click',loadPayouts);
+
+async function loadInsights(){
+  const d=await api('/vendo/api/insights');
+  $('#ret').innerHTML=d.retention.map(r=>`<tr><td>${esc(r.business_id)}</td><td>${r.buyers}</td><td>${r.repeatBuyers}</td><td>${Math.round(r.repeatRate*100)}%</td><td>${r.returningAfterADay}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">No identified buyers yet. Buyer wallets appear once payments settle.</td></tr>';
+  const seven=new Map(d.uptime7d.map(u=>[u.business_id,u]));
+  $('#up').innerHTML=d.uptime24h.map(u=>`<tr><td>${esc(u.business_id)}</td><td>${u.uptimePct}%</td><td>${seven.get(u.business_id)?.uptimePct??'-'}%</td><td>${u.avgMs} ms</td><td>${esc(u.last.slice(0,19).replace('T',' '))}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">No checks yet.</td></tr>';
+  $('#mcpSnippet').textContent=JSON.stringify({mcpServers:{vendo:{type:'http',url:`${CFG.publicUrl}/mcp`}}},null,2);
+}
+$('#runHealth').onclick=async()=>{$('#hmsg').textContent='Checking…';const r=await post('/vendo/api/health/run',{});$('#hmsg').textContent=`${r.length} checked`;loadInsights();};
+document.querySelector('[data-t="insights"]').addEventListener('click',loadInsights);
+async function loadBills(){
+  const b=await api('/vendo/api/bills');
+  $('#b-list').innerHTML=b.map(x=>{const lr=x.last_result?JSON.parse(x.last_result):null;return `<tr><td><code>${esc(x.payee)}</code></td><td>${x.amount_usd}</td><td>${x.every_days}d</td><td>${esc(x.next_due.slice(0,10))}</td><td>${lr?(lr.ok?'<span class="ok">paid</span>':`<span class="err">${esc(lr.error)}</span>`):'-'}</td></tr>`}).join('')||'<tr><td colspan="5" class="muted">No bills yet.</td></tr>';
+}
+$('#b-add').onclick=async()=>{const r=await post('/vendo/api/bills',{payee:$('#b-payee').value,amountUsd:+$('#b-amt').value,ref:$('#b-ref').value,everyDays:+$('#b-every').value});$('#b-msg').innerHTML=r.errors?`<span class="err">${esc(r.errors.join('; '))}</span>`:'<span class="ok">Added.</span>';loadBills();};
+$('#b-run').onclick=async()=>{const r=await post('/vendo/api/bills/run',{});$('#b-msg').textContent=`${r.length} bill(s) processed`;loadBills();loadTreasury();};
+document.querySelector('[data-t="treasury"]').addEventListener('click',loadBills);
+
+let WZ=1;
+function wzShow(n){WZ=n;document.querySelectorAll('.wz').forEach(c=>c.classList.toggle('hide',+c.dataset.s!==n));document.querySelectorAll('#wz-steps .kpi').forEach(k=>k.style.outline=+k.dataset.s===n?'2px solid var(--brand)':'none');if(n===3)wzScore();}
+document.querySelectorAll('.wz-next').forEach(b=>b.onclick=()=>wzShow(Math.min(4,WZ+1)));
+document.querySelectorAll('.wz-back').forEach(b=>b.onclick=()=>wzShow(Math.max(1,WZ-1)));
+document.querySelector('[data-t="wizard"]').addEventListener('click',()=>wzShow(WZ));
+function wzParams(){return $('#wz-params').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]).map(([name,description,example,req])=>({name,in:'query',description:description||name,example:example||undefined,required:/^y/i.test(req||'')}));}
+function wzTiers(){return[...document.querySelectorAll('.wz-ton')].filter(c=>c.checked).map(c=>({name:c.dataset.t,priceUsd:+document.querySelector(`.wz-tp[data-t="${c.dataset.t}"]`).value,includes:document.querySelector(`.wz-ti[data-t="${c.dataset.t}"]`).value||document.querySelector(`.wz-ti[data-t="${c.dataset.t}"]`).placeholder}));}
+function wzScore(){const d=$('#wz-desc').value,ps=wzParams();const tips=[];if(d.length<80)tips.push('Make the description longer: what it returns, for whom, one use case.');if(!/^(Look up|Get|Check|Convert|Search|Screen|Calculate|Find)/i.test(d))tips.push('Start the description with a verb agents search for.');if(!ps.length)tips.push('Describe at least one input.');if(ps.some(p=>!p.example))tips.push('Give every input an example.');if(!$('#wz-example').value)tips.push('Add an example call.');if(!$('#wz-out').value)tips.push('Say what the response contains.');$('#wz-score').innerHTML=tips.length?'<b>Improve discoverability:</b><br>'+tips.map(esc).join('<br>'):'<span class="ok">Looks agent-ready.</span>';}
+['#wz-desc','#wz-params','#wz-example','#wz-out'].forEach(s=>$(s).addEventListener('input',wzScore));
+$('#wz-import').onclick=async()=>{
+  $('#wz-imsg').textContent='Importing…';
+  const r=await post('/vendo/api/import-openapi',{specUrl:$('#wz-spec').value,priceUsd:0.03});
+  if(r.errors){$('#wz-imsg').innerHTML=`<span class="err">${esc(r.errors.join('; '))}</span>`;return;}
+  $('#wz-base').value=r.baseUrl;$('#wz-title').value=r.title;$('#wz-desc').value=(r.description||'').slice(0,400);
+  const rec=r.routes.filter(x=>x.recommended);
+  $('#wz-imsg').textContent=`${r.routes.length} endpoints found, ${rec.length} look sellable. Pick one:`;
+  $('#wz-routes').innerHTML=rec.map((x,i)=>`<label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="radio" name="wzr" value="${i}" style="width:auto" ${i?'':'checked'}> <code>${esc(x.method)} ${esc(x.path)}</code> ${esc(x.summary)}</label>`).join('');
+  const pick=i=>{const x=rec[i];$('#wz-path').value=x.path;$('#wz-summary').value=x.summary;$('#wz-example').value=x.sampleRequest;$('#wz-out').value=x.sampleResponseNote==='JSON response'?'':x.sampleResponseNote;$('#wz-params').value=x.params.map(p=>[p.name,p.description,p.example??'',p.required?'yes':'no'].join(' | ')).join('\n');};
+  if(rec.length)pick(0);document.querySelectorAll('input[name="wzr"]').forEach(x=>x.onchange=()=>pick(+x.value));
+};
+$('#wz-create').onclick=async()=>{
+  const at=$('#wz-autht').value;const tiers=wzTiers();
+  const standard=tiers.find(x=>x.name==='standard')||tiers[0];
+  const body={id:$('#wz-id').value.trim(),title:$('#wz-title').value,description:$('#wz-desc').value,baseUrl:$('#wz-base').value.trim(),payTo:$('#wz-pay').value.trim()||undefined,ownerApproved:$('#wz-approve').checked,listingModel:$('#wz-model').value,
+    upstreamAuth:at&&$('#wz-authv').value?{type:at,headerName:$('#wz-authn').value.trim(),paramName:$('#wz-authn').value.trim(),value:$('#wz-authv').value}:undefined,
+    routes:[{method:'GET',path:$('#wz-path').value.trim(),priceUsd:standard?standard.priceUsd:0.03,summary:$('#wz-summary').value||$('#wz-title').value,params:wzParams(),sampleRequest:$('#wz-example').value,sampleResponseNote:$('#wz-out').value,tiers:tiers.length>1?tiers:undefined}]};
+  $('#wz-result').innerHTML='<p class="muted">Creating…</p>';
+  const r=await post('/vendo/api/businesses',body);
+  if(r.errors){$('#wz-result').innerHTML=`<p class="err">${esc(r.errors.join('; '))}</p>`;return;}
+  $('#wz-authv').value='';
+  const test=await post(`/vendo/api/businesses/${r.business.id}/test`,{});
+  $('#wz-result').innerHTML=`<p class="ok">Service created.</p><p>Payment check: ${test.unpaid?.asksForPayment?'<span class="ok">asks agents to pay</span>':'<span class="err">not asking for payment</span>'}</p><p class="muted">Next: follow the go-live steps to register it on OKX AI.</p>`;
+  await load();goLive(r.business.id);
+};
+
+routeRow();load();
+</script>
+</body>
+</html>

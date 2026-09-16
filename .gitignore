@@ -1,0 +1,15 @@
+node_modules
+dist
+
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+
+# Runtime state: databases and the generated receipt signing key live here
+data/
+
+# Foundry
+contracts/lib
+contracts/out
+contracts/cache

@@ -1,0 +1,9 @@
+services:
+  vendo:
+    build: .
+    env_file: .env
+    ports: ["3000:3000"]
+    volumes: ["vendo-data:/app/data"]
+    restart: unless-stopped
+volumes:
+  vendo-data:

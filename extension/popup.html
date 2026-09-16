@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+:root{--bg:#fff;--s:#F1F3F6;--ink:#0B0E16;--m:#5C6578;--l:#D6DAE3;--a:#0B8A57;--e:#B4412F}
+@media (prefers-color-scheme:dark){:root{--bg:#0C1016;--s:#151B25;--ink:#E9EEF4;--m:#8C97A8;--l:#243042;--a:#3DDC97;--e:#EF8C79}}
+*{box-sizing:border-box}body{margin:0;width:380px;background:var(--bg);color:var(--ink);font:13px/1.45 "Segoe UI",system-ui,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--l)}
+.logo{font-weight:700}.logo i{color:var(--a);font-style:normal}
+main{padding:12px 14px}
+.row{display:flex;gap:6px}input,textarea{width:100%;font:inherit;background:var(--s);color:var(--ink);border:1px solid var(--l);border-radius:8px;padding:7px 9px}
+button{font:600 12px inherit;border:1px solid var(--l);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+button.p{background:var(--a);border-color:var(--a);color:#04130C}
+.item{border:1px solid var(--l);border-radius:10px;padding:9px 10px;margin-top:8px}
+.top{display:flex;justify-content:space-between;gap:8px}.price{font-weight:700;color:var(--a)}
+.m{color:var(--m);font-size:12px}.err{color:var(--e)}.ok{color:var(--a);font-weight:600}
+label{display:block;font-size:11px;color:var(--m);margin:6px 0 2px}
+pre{background:var(--s);border-radius:8px;padding:8px;max-height:150px;overflow:auto;font-size:11px;white-space:pre-wrap;margin:6px 0 0}
+.spend{font-size:11px;color:var(--m)}
+</style></head>
+<body>
+<header><span class="logo">vendo<i>.</i> Assist</span><a href="options.html" target="_blank" class="m">Settings</a></header>
+<main>
+  <div class="row"><input id="q" placeholder="What do you need? e.g. sanctions check"><button class="p" id="go">Search</button></div>
+  <div class="row" style="margin-top:6px"><button id="sel">Use selected text</button><span class="spend" id="spend"></span></div>
+  <div id="out"></div>
+  <p class="m" style="margin-top:10px">Assist only reads the page when you tap "Use selected text". Payments need your confirmation.</p>
+</main>
+<script src="popup.js"></script>
+</body></html>

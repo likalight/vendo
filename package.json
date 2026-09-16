@@ -1,0 +1,45 @@
+{
+  "name": "vendo",
+  "version": "1.0.0",
+  "description": "Vendo — sell business APIs to AI agents on OKX AI, paid on X Layer",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "start": "tsx src/app.ts",
+    "dev:offline": "cross-env VENDO_OFFLINE=1 tsx watch src/app.ts",
+    "start:offline": "cross-env VENDO_OFFLINE=1 tsx src/app.ts",
+    "dev:mpp": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "check:402": "node scripts/check-402.mjs",
+    "test:finance": "cross-env VENDO_DB=data/vendo-test.db tsx scripts/test-finance.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:all": "npm run typecheck && npm test && npm run test:finance",
+    "demo:seed": "cross-env VENDO_OFFLINE=1 VENDO_DB=data/demo.db tsx scripts/seed-demo.ts",
+    "demo:run": "cross-env VENDO_OFFLINE=1 VENDO_DB=data/demo.db tsx src/app.ts",
+    "buyer": "tsx scripts/buyer-agent.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@okxweb3/mpp": "^0.1.0",
+    "@okxweb3/x402-core": "^0.1.0",
+    "@okxweb3/x402-evm": "^0.2.1",
+    "@okxweb3/x402-express": "^0.1.1",
+    "better-sqlite3": "^13.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mppx": "^0.3.16",
+    "urlpattern-polyfill": "^10.1.0",
+    "viem": "^2.56.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.3",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "type": "module"
+}
