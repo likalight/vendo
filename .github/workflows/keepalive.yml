@@ -1,0 +1,44 @@
+name: Keep alive
+
+# The service runs on a Render free plan, which sleeps after about 15 minutes idle and
+# cold-starts on the next request. A sleeping instance answers the first call with a 404,
+# which is enough to fail OKX AI listing review and to dent the uptime we report on /proof.
+# This pings /health often enough that it never sleeps.
+#
+# GitHub's scheduler is best effort and can run late under load, so the interval is set
+# tighter than the 15 minute sleep window to leave room for drift.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health
+        run: |
+          URL="https://vendo-pfm3.onrender.com/health"
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /tmp/body.json -w "%{http_code}" --max-time 60 "$URL" || echo 000)
+            if [ "$code" = "200" ]; then
+              echo "OK on attempt $attempt"
+              cat /tmp/body.json
+              exit 0
+            fi
+            echo "attempt $attempt returned $code, retrying"
+            sleep 20
+          done
+          echo "Health check failed three times. The service may be down."
+          cat /tmp/body.json || true
+          exit 1
+
+      - name: Confirm the paywall still answers 402
+        run: |
+          URL="https://vendo-pfm3.onrender.com/counterparty/sanctions?name=Example"
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$URL" || echo 000)
+          echo "unpaid call returned $code"
+          # A listed A2MCP endpoint must answer 402 when unpaid. If this changes, the
+          # listing is at risk and we want to know before OKX does.
+          [ "$code" = "402" ] || exit 1
