@@ -105,6 +105,17 @@ export const businesses: Business[] = [
     ],
   },
   {
+    id: "ask",
+    title: "Vendo Ask",
+    description: "Ask a question in plain English and get a paid answer. Vendo picks the service that can answer it, calls it, and returns the result along with which service answered and what that service costs on its own. One call instead of discovering a catalogue, learning its parameters and choosing.",
+    baseUrl: "", local: true, ownerApproved: true,
+    licence: "Vendo service. Routes only to services Vendo operates. Calling a service directly is cheaper when you already know which one you need.",
+    routes: [{ method: "GET", path: "/q", priceUsd: 0.05, summary: "Ask a question and get a paid answer from whichever Vendo service fits",
+      params: [{ name: "q", in: "query", required: true, description: "The question, in plain English", example: "is Example Trading LLC sanctioned" }],
+      sampleRequest: "/q?q=is%20Example%20Trading%20LLC%20sanctioned",
+      sampleResponseNote: "JSON with the answer, which service answered, that service's standalone price, and why it was chosen" }],
+  },
+  {
     id: "trackrecord",
     title: "Vendo ASP track record",
     description: "Delivery history for a service listed through Vendo: paid calls, success rate, uptime, repeat buyers and seller level, plus where to verify its signed delivery receipts. Built for OKX AI Evaluators settling a dispute, and for agents choosing between two providers.",

@@ -17,7 +17,7 @@ import { listBusinesses, getBusiness, saveBusiness, seedIfEmpty, validateBusines
 import { recordSale, settleSale, listSales, listPurchases, statement, statementCsv, payoutSummary, recordPayout, listPayouts, decodeSettlement, retention } from "./ledger.js";
 import { llmsTxt, openApi, mcpTools } from "./kit.js";
 import { score, findTest, suggestFixes, latestRuns } from "./discovery.js";
-import { match, run, okxTaskPrompt, okxTaskBrief } from "./assist.js";
+import { match, run, okxTaskPrompt, okxTaskBrief, fillParams } from "./assist.js";
 import { importOpenApi } from "./openapi-import.js";
 import { llmEnabled } from "./llm.js";
 import { inspectPage, verifyOwnership, formToBusiness, submitForm, verificationToken, assertPublicHttps } from "./web-agent.js";
@@ -494,6 +494,7 @@ async function localService(id: string, path: string, q: Record<string, string>,
   try {
     if (id === "counterparty" && path === "/sanctions") return { status: 200, body: await screenName(q.name) };
     if (id === "counterparty" && path === "/check") return { status: 200, body: await counterpartyCheck(q, tier) };
+    if (id === "ask" && path === "/q") return { status: 200, body: await askBroker(String(q.q ?? ""), tier) };
     if (id === "trackrecord" && path === "/asp") return { status: 200, body: aspTrackRecord(q) };
     if (id === "filings" && path === "/company") return { status: 200, body: await secCompany(q.cik) };
     if (id === "invoice" && path === "/calc") return { status: 200, body: await invoiceCalc(q as any) };
@@ -502,6 +503,65 @@ async function localService(id: string, path: string, q: Record<string, string>,
     return { status: /required|must be|Set SEC_USER_AGENT/.test(msg) ? 400 : 502, body: { error: msg } };
   }
   return { status: 404, body: { error: "unknown local service" } };
+}
+
+/**
+ * Ask a question, get a paid answer.
+ *
+ * Coinbase's marketplace sells outcomes rather than endpoints: one price, one answer, composed of
+ * whatever services were needed. Every OKX AI listing today is a single endpoint an agent has to
+ * find, understand and parameterise first. This collapses that into one call.
+ *
+ * It routes only to services Vendo operates. Brokering someone else's paid service would mean
+ * marking up work Vendo has no permission to resell, which is the rule the import path already
+ * enforces. Non-Vendo matches are returned as a pointer so the caller can go direct.
+ *
+ * The price is flat because an x402 challenge is fixed per route and cannot vary by question. That
+ * means a cheap question costs more here than calling the service directly, so the response says so
+ * plainly and reports what the underlying service charges on its own.
+ */
+async function askBroker(question: string, tier?: string) {
+  if (!question.trim()) throw new Error("q is required: ask a question in plain English");
+
+  // searchServices ranks every listed route, local ones included. assist.match() skips local
+  // stores on purpose, because Assist pays real money and would be paying Vendo to call Vendo.
+  const ranked = searchServices(question, { limit: 3 }).items;
+  const best = ranked[0];
+  if (!best) {
+    // Nothing Vendo runs fits. Hand back a ready-to-post OKX AI task rather than a shrug.
+    return { question, answered: false, reason: "No Vendo service can answer this.",
+      okxTaskBrief: okxTaskBrief(question), checkedAt: new Date().toISOString() };
+  }
+
+  const store = getBusiness(best.store);
+  const route = store && store.routes.find((r) => r.summary === best.summary && r.method === best.method);
+  if (!store || !route) {
+    return { question, answered: false, reason: "Matched a service that is no longer listed.", checkedAt: new Date().toISOString() };
+  }
+
+  const common = { question, answeredBy: { store: store.id, title: store.title, summary: route.summary },
+    standalonePriceUsd: route.priceUsd, alternatives: ranked.slice(1).map((o) => ({ store: o.store, summary: o.summary, priceUsd: o.priceUsd })) };
+
+  if (!store.local) {
+    // Upstream services need their credentials and their own forwarding path. Rather than half-do
+    // that here, point the caller at the exact URL so they can call it directly.
+    return { ...common, answered: false, reason: "This answer comes from an upstream service. Call it directly.",
+      callDirectly: best.url, checkedAt: new Date().toISOString() };
+  }
+
+  // Turn the question into concrete parameters. Without values there is nothing to call.
+  const filled = fillParams(store, route, question);
+  if (!filled) {
+    return { ...common, answered: false, reason: "Could not read the inputs this service needs from the question.",
+      needs: route.params.filter((x) => x.required || x.in === "path").map((x) => ({ name: x.name, description: x.description, example: x.example })),
+      checkedAt: new Date().toISOString() };
+  }
+  const params = Object.fromEntries(new URL(filled, env.publicUrl).searchParams);
+  const out = await localService(store.id, route.path, params, tier);
+
+  return { ...common, answered: out.status < 400, status: out.status, usedParameters: params, answer: out.body,
+    note: `Routed for you. Calling ${store.id}${route.path} directly costs ${route.priceUsd} USDT0.`,
+    checkedAt: new Date().toISOString() };
 }
 
 /**

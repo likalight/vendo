@@ -19,9 +19,10 @@ export type Offer = {
 
 const STOP = new Set(["the","and","for","with","this","that","from","into","your","you","our","are","was","can","get","new","any","all","per","via","how","what","who","why","when","use","about","please","need","want","some","one","two","out","its","has","have","help","make","find"]);
 const words = (s: string) => (s.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []).filter((w) => !STOP.has(w));
+const KNOWN_STORES = ["bookkeeper", "discovery", "counterparty", "trackrecord", "filings", "invoice", "fx", "company-check", "worldbank"];
 const CURRENCIES = ["USD","EUR","SGD","GBP","JPY","CNY","HKD","AUD","CAD","CHF","INR","MYR","IDR","THB","VND","PHP","KRW","AED"];
 
-function fillParams(b: Business, r: SellRoute, text: string): string | null {
+export function fillParams(b: Business, r: SellRoute, text: string): string | null {
   let path = r.path;
   const query = new URLSearchParams();
   for (const p of r.params) {
@@ -32,8 +33,26 @@ function fillParams(b: Business, r: SellRoute, text: string): string | null {
       if (p.name === "base") v = found[0]; else v = found.slice(1).join(",") || undefined;
     } else if (/legalName/.test(p.name)) {
       v = text.match(/"([^"]{2,80})"/)?.[1] ?? text.match(/\b([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*\s+(?:Inc\.?|Ltd\.?|LLC|GmbH|Pte\.?\s*Ltd\.?|PLC|AG|SA|BV))\b/)?.[1];
-    } else if (p.name === "business") v = text.match(/\bbusiness[:= ]+([a-z0-9-]+)/i)?.[1];
-    else if (p.name === "task") v = text.slice(0, 200);
+    } else if (p.name === "business" || p.name === "store") {
+      v = text.match(/\b(?:business|store)[:= ]+([a-z0-9-]+)/i)?.[1] ?? KNOWN_STORES.find((s) => new RegExp(`\\b${s}\\b`, "i").test(text));
+    } else if (p.name === "task") v = text.slice(0, 200);
+    // A company or person name: a quoted string, or a capitalised run ending in a legal suffix,
+    // or a capitalised run of two or more words. Questions are written as prose, not as parameters.
+    else if (p.name === "name") {
+      v = text.match(/"([^"]{2,80})"/)?.[1]
+        ?? text.match(/\b([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*\s+(?:Inc\.?|Ltd\.?|LLC|L\.L\.C\.?|GmbH|Pte\.?\s*Ltd\.?|PLC|AG|SA|BV|Corp\.?|Co\.?))\b/)?.[1]
+        ?? text.match(/\b([A-Z][\w&.-]{1,}(?:\s+[A-Z][\w&.-]{1,}){1,4})\b/)?.[1];
+    }
+    else if (p.name === "cik") v = text.match(/\bcik[:= ]*(\d{1,10})\b/i)?.[1] ?? text.match(/\b(\d{6,10})\b/)?.[0];
+    else if (p.name === "amount") v = text.match(/\b(\d+(?:\.\d+)?)\b/)?.[1];
+    else if (p.name === "taxRatePct") v = text.match(/(\d+(?:\.\d+)?)\s*(?:%|percent|per cent)/i)?.[1];
+    else if (p.name === "currency") v = CURRENCIES.find((c) => new RegExp(`\\b${c}\\b`, "i").test(text));
+    else if (p.name === "to") {
+      const found = CURRENCIES.filter((c) => new RegExp(`\\b${c}\\b`, "i").test(text));
+      // "convert USD to SGD": the destination is whatever follows "to", else the second currency seen.
+      v = text.match(/\bto\s+([A-Z]{3})\b/)?.[1] ?? found[1];
+    }
+    else if (p.name === "month") v = text.match(/\b(20\d{2}-\d{2})\b/)?.[1];
     if (!v && p.example && !(p.in === "path" || p.required)) continue;
     if (!v) { if (p.in === "path" || p.required) return null; continue; }
     if (p.in === "path") path = path.replace(`:${p.name}`, encodeURIComponent(v));

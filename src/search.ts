@@ -8,6 +8,19 @@ import { sellerLevels } from "./levels.js";
 const STOP = new Set(["the","and","for","with","this","that","from","into","your","you","our","are","can","get","new","any","all","per","how","what","who","why","when","use","please","need","want","some","find","check","data","service"]);
 const words = (s: string) => (s.toLowerCase().match(/[a-z0-9]{2,}/g) ?? []).filter((w) => !STOP.has(w));
 
+/**
+ * Crude suffix stripping, not a real stemmer. Enough to relate the words people actually type to
+ * the words a listing uses: "sanctioned" to "sanctions", "filings" to "filing", "screening" to
+ * "screen". A full stemmer would be overkill for a few hundred catalogue terms.
+ */
+function stem(w: string) {
+  return w
+    .replace(/(ations|ation|ions|ion)$/, "")
+    .replace(/(ings|ing)$/, "")
+    .replace(/(ed|es|s)$/, "")
+    .replace(/(e)$/, "") || w;
+}
+
 export function searchServices(q: string, opts: { maxPriceUsd?: number; limit?: number } = {}) {
   const qw = [...new Set(words(q))];
   const up = new Map(uptime(24).map((u) => [u.business_id, u.uptimePct]));
@@ -16,11 +29,13 @@ export function searchServices(q: string, opts: { maxPriceUsd?: number; limit?: 
   const items = listBusinesses().filter((b) => b.status !== "paused").flatMap((b) => b.routes.map((r) => {
     const hay = words([b.title, b.description, r.summary, ...r.params.map((p) => `${p.name} ${p.description}`)].join(" "));
     const title = new Set(words(`${b.title} ${r.summary}`));
+    const hayStems = new Set(hay.map(stem));
     let score = 0;
     for (const w of qw) {
       if (title.has(w)) score += 3;
       else if (hay.includes(w)) score += 1;
       else if (hay.some((h) => h.startsWith(w) || w.startsWith(h))) score += 0.5;
+      else if (hayStems.has(stem(w))) score += 0.8;
     }
     if (!qw.length) score = 1;
     if (score > 0) {
