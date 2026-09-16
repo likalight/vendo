@@ -5,7 +5,7 @@ Vendo is a seller toolkit for **OKX AI** ("Fiverr for AI agents"), built for OKX
 - **Sell side:** businesses and data providers connect an API (encrypted key) or a verified website form, set prices and tiers, and list on OKX AI.
 - **Discover and buy:** agents find services via search, MCP (`/mcp`), the skills bundle (`skills/vendo`) and public feed; people use the Chrome extension (`extension/`). Payments are per call in USDT0 on X Layer via x402.
 - **Positioning:** real-world finance and business data for agents (counterparty check, sanctions, SEC filings, registry, FX, invoice maths).
-- **Built-in lessons from past winners:** Rill (agent-readable services), PayperPlane (browser extension), MicroPay (funding plans for funds on other chains).
+- **Reference projects (verify before relying on these):** MicroPay won a category prize at the TOKEN2049 Origins hackathon for cross-chain agent payments, confirmed by CoinDesk and The Defiant. "Rill" and "Paper Plane" came from an earlier planning chat and could not be verified against a primary source. None of the three won an OKX event, so do not present them as OKX precedent. For real OKX precedent see the OKX.AI Genesis Hackathon gallery on HackQuest.
 
 ## Commands
 - `npm install`
@@ -17,7 +17,13 @@ Vendo is a seller toolkit for **OKX AI** ("Fiverr for AI agents"), built for OKX
 - `npm run demo:seed && npm run demo:run` : offline sample data for rehearsal (label as sample)
 
 ## Repo
-`https://github.com/likalight/vendo` (private). CI runs typecheck, e2e and finance tests on every push.
+`https://github.com/likalight/vendo` (public). CI runs typecheck, e2e and finance tests on every push.
+
+## Live
+`https://vendo-pfm3.onrender.com` on Render (free plan, Singapore). Live mode, X Layer testnet, chain 1952.
+`npm run check:402 -- https://vendo-pfm3.onrender.com` passes: the base64 `PAYMENT-REQUIRED` header matches the OKX A2MCP spec field for field.
+
+Free plan has no persistent disk, so the container wipes `data/` on every restart, not just on deploy. The eight seeded stores return automatically; runtime-created stores and the sales ledger do not. Keep a free uptime pinger on `/health` every 10 minutes so the instance never sleeps.
 
 ## Local setup (Windows)
 - Node 22 LTS. On Node 24 the install fails; switch with `nvm use 22.22.2`.
@@ -44,9 +50,14 @@ Vendo is a seller toolkit for **OKX AI** ("Fiverr for AI agents"), built for OKX
 - Screening output is a risk signal, not legal advice. Keep that wording.
 - Keep tests passing (`npm run test:all`) after every change. Offline mode must stay clearly labelled.
 
+## Hackathon dates
+Online build period 17 to 25 Sep 2026. Submission by 25 Sep 23:59 UTC. Live finale Singapore 6 Oct 2026.
+Judging explicitly considers onchain data, so real paid X Layer transactions count.
+See `docs/BUILD-LOG.md` for what predates the build period and what was built inside it.
+
 ## Next steps (priority)
 1. Fill `.env` with OKX Developer Portal keys, `VENDO_ADMIN_TOKEN`, `DEFAULT_PAY_TO`, `SEC_USER_AGENT`, `PUBLIC_URL`
-2. Deploy (Dockerfile / docker-compose) to a public HTTPS domain, not a Hong Kong region
+2. DONE: deployed to Render, Singapore. Note on regions: the OKX docs call Hong Kong the top pick generally, and only warn against it if the service calls Claude, OpenAI or Gemini, which refuse HK connections. Vendo uses ANTHROPIC_API_KEY optionally, so avoiding HK keeps that option open.
 3. `npm run check:402 -- https://your-domain`, then run the buyer agent on X Layer testnet, then mainnet
 4. Register and list services on OKX AI via Onchain OS (dashboard Go live steps); review takes up to 24h
 5. Onboard real sellers; record the 2 to 4 minute demo video; submit

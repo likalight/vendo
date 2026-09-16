@@ -87,10 +87,67 @@ export async function match(text: string, limit = 3): Promise<{ mode: string; of
   return { mode: "keyword", offers };
 }
 
-/** For bigger or custom jobs, hand off to OKX AI's own task matching instead of competing with it. */
+export type TaskBrief = {
+  title: string;
+  description: string;
+  budgetUsdt0: number;
+  deadline: string;
+  matching: "automatic" | "direct" | "public";
+  acceptance: string[];
+  prompt: string;
+  note: string;
+};
+
+/**
+ * For bigger or custom jobs, hand off to OKX AI's own task matching instead of competing with it.
+ *
+ * OKX AI task creation asks for a title, description, budget and deadline, then matches
+ * automatically, by direct assignment, or by public listing for bids. A one-line prompt makes the
+ * user's agent ask for all of that interactively. Filling it in up front is the useful part, so
+ * this returns a complete brief and a prompt that already carries every field.
+ *
+ * Budget and deadline are defaults, not estimates. Vendo has no basis for pricing a custom job,
+ * so they are labelled as a starting point for the user to change rather than presented as a
+ * recommendation.
+ */
+export function okxTaskBrief(text: string, opts: { budgetUsdt0?: number; days?: number; matching?: TaskBrief["matching"] } = {}): TaskBrief {
+  const clean = text.replace(/\s+/g, " ").trim();
+  const description = clean.slice(0, 600);
+  // First clause or sentence, trimmed to something that reads as a title.
+  const firstClause = clean.split(/[.;\n]/)[0].trim();
+  const title = (firstClause.length >= 8 && firstClause.length <= 80 ? firstClause : clean.slice(0, 80)).replace(/[,\s]+$/, "");
+
+  const budgetUsdt0 = opts.budgetUsdt0 ?? 5;
+  const days = opts.days ?? 3;
+  const deadline = new Date(Date.now() + days * 864e5).toISOString();
+
+  const acceptance = [
+    "The deliverable answers the request above in full.",
+    "Sources or method are stated, so the result can be checked.",
+    "Delivered as structured text or a file, in English.",
+  ];
+
+  const prompt = [
+    `Post a job on OKX.AI using Onchain OS.`,
+    `Title: ${title}`,
+    `Description: ${description}`,
+    `Budget: ${budgetUsdt0} USDT0`,
+    `Deadline: ${deadline.slice(0, 10)}`,
+    `Matching: ${opts.matching ?? "automatic"}`,
+    `Accept when: ${acceptance.join(" ")}`,
+  ].join("\n");
+
+  return {
+    title, description, budgetUsdt0, deadline,
+    matching: opts.matching ?? "automatic",
+    acceptance, prompt,
+    note: "Budget and deadline are defaults, not estimates. Change them before posting.",
+  };
+}
+
+/** Back-compatible one-liner. Prefer okxTaskBrief, which carries every field OKX AI asks for. */
 export function okxTaskPrompt(text: string) {
-  const clean = text.replace(/\s+/g, " ").trim().slice(0, 240);
-  return `Post a job on OKX.AI using Onchain OS: ${clean}`;
+  return okxTaskBrief(text).prompt;
 }
 
 let buyer: { http: x402HTTPClient; address: string } | null = null;

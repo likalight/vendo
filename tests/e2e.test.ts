@@ -245,3 +245,24 @@ test("track record: paid delivery evidence for a listed store", async () => {
   // An unknown store is a caller error, not a 502.
   assert.equal((await get("/trackrecord/asp?store=not-a-store", paid)).status, 400);
 });
+
+test("assist: hands off a full OKX AI task brief, not just a one-liner", async () => {
+  const r = await post("/vendo/assist/match", { text: "audit our solidity staking contract before mainnet" }, { ...j, "x-vendo-assist": ASSIST });
+  assert.equal(r.status, 200);
+  const { okxTaskBrief: brief, okxTaskPrompt: prompt } = await r.json();
+
+  // OKX AI task creation asks for title, description, budget and deadline.
+  assert.ok(brief.title.length > 0 && brief.title.length <= 80);
+  assert.match(brief.description, /staking contract/);
+  assert.ok(brief.budgetUsdt0 > 0);
+  assert.ok(new Date(brief.deadline).getTime() > Date.now());
+  assert.ok(["automatic", "direct", "public"].includes(brief.matching));
+  assert.ok(brief.acceptance.length >= 1);
+  // Defaults must be labelled as defaults, not presented as estimates.
+  assert.match(brief.note, /default/i);
+
+  // The prompt carries every field so the agent does not have to ask for them.
+  for (const field of ["Title:", "Description:", "Budget:", "Deadline:", "Matching:"]) {
+    assert.ok(prompt.includes(field), `prompt missing ${field}`);
+  }
+});

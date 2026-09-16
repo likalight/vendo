@@ -17,7 +17,7 @@ import { listBusinesses, getBusiness, saveBusiness, seedIfEmpty, validateBusines
 import { recordSale, listSales, listPurchases, statement, statementCsv, payoutSummary, recordPayout, listPayouts, decodeSettlement, retention } from "./ledger.js";
 import { llmsTxt, openApi, mcpTools } from "./kit.js";
 import { score, findTest, suggestFixes, latestRuns } from "./discovery.js";
-import { match, run, okxTaskPrompt } from "./assist.js";
+import { match, run, okxTaskPrompt, okxTaskBrief } from "./assist.js";
 import { importOpenApi } from "./openapi-import.js";
 import { llmEnabled } from "./llm.js";
 import { inspectPage, verifyOwnership, formToBusiness, submitForm, verificationToken, assertPublicHttps } from "./web-agent.js";
@@ -336,7 +336,7 @@ app.post("/mcp", (req, res) => { handleMcp(req, res).catch((e) => res.status(500
 app.get("/mcp", (_q, s) => s.status(405).json({ error: "Use POST with JSON-RPC (MCP Streamable HTTP)" }));
 
 // ---------- Free: Vendo Assist API (used by the browser extension) ----------
-app.post("/vendo/assist/match", async (q, s) => { const text = String(q.body?.text ?? ""); const r = await match(text); s.json({ ...r, okxTaskPrompt: okxTaskPrompt(text) }); });
+app.post("/vendo/assist/match", async (q, s) => { const text = String(q.body?.text ?? ""); const r = await match(text); s.json({ ...r, okxTaskPrompt: okxTaskPrompt(text), okxTaskBrief: okxTaskBrief(text) }); });
 app.post("/vendo/assist/run", async (q, s) => {
   const out: any = await run(String(q.body?.url ?? ""), String(q.body?.serviceKey ?? ""), String(q.body?.buyer ?? "default"));
   if (!out.paid && out.status === 402 && out.priceUsdt0 == null && /BUYER_PRIVATE_KEY|balance|insufficient/i.test(String(out.error ?? ""))) {
