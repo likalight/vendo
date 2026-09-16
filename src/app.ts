@@ -113,7 +113,7 @@ app.use("/vendo/assist/run", rateLimit(30), requireAssist);
 app.use("/mcp", rateLimit(120));
 
 // ---------- Free: pages, kit, health ----------
-app.get("/", (_q, s) => s.redirect("/app"));
+app.get("/", (_q, s) => s.type("html").send(page("index.html")));
 app.get("/app", (_q, s) => s.type("html").send(page("app.html")));
 app.get("/proof", (_q, s) => s.type("html").send(page("proof.html")));
 app.get("/how", (_q, s) => s.type("html").send(page("how.html")));
