@@ -93,6 +93,15 @@ export const businesses: Business[] = [
     ],
   },
   {
+    id: "trackrecord",
+    title: "Vendo ASP track record",
+    description: "Delivery history for a service listed through Vendo: paid calls, success rate, uptime, repeat buyers and seller level, plus where to verify its signed delivery receipts. Built for OKX AI Evaluators settling a dispute, and for agents choosing between two providers.",
+    baseUrl: "", local: true, ownerApproved: true, licence: "Vendo service. Delivery data observed by Vendo, not a guarantee of future delivery.",
+    routes: [{ method: "GET", path: "/asp", priceUsd: 0.01, summary: "Delivery track record for a listed store",
+      params: [{ name: "store", in: "query", required: true, description: "Store id as listed on Vendo", example: "counterparty" }],
+      sampleRequest: "/asp?store=counterparty", sampleResponseNote: "JSON with paid calls, success rate, uptime over 24h and 7d, repeat buyer rate, seller level and receipt verification endpoints" }],
+  },
+  {
     id: "filings",
     title: "Public company filings (SEC EDGAR)",
     description: "Look up a US public company by SEC CIK: name, tickers, exchange, industry and its latest filings such as 10-K, 10-Q and 8-K. Useful for research and trading agents.",

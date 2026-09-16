@@ -450,6 +450,7 @@ async function localService(id: string, path: string, q: Record<string, string>,
   try {
     if (id === "counterparty" && path === "/sanctions") return { status: 200, body: await screenName(q.name) };
     if (id === "counterparty" && path === "/check") return { status: 200, body: await counterpartyCheck(q, tier) };
+    if (id === "trackrecord" && path === "/asp") return { status: 200, body: aspTrackRecord(q) };
     if (id === "filings" && path === "/company") return { status: 200, body: await secCompany(q.cik) };
     if (id === "invoice" && path === "/calc") return { status: 200, body: await invoiceCalc(q as any) };
   } catch (e: any) {
@@ -457,6 +458,48 @@ async function localService(id: string, path: string, q: Record<string, string>,
     return { status: /required|must be|Set SEC_USER_AGENT/.test(msg) ? 400 : 502, body: { error: msg } };
   }
   return { status: 404, body: { error: "unknown local service" } };
+}
+
+/**
+ * Delivery track record for one listed store, assembled from what Vendo already observes:
+ * recorded sales, uptime probes, repeat buyers and seller level.
+ *
+ * On OKX AI a disputed A2A delivery goes to at least five Evaluators, who are told to pull
+ * "historical delivery data from Agent Service Providers" before voting, and who are slashed
+ * for voting with the minority. This returns that evidence in one call. Buyers choosing
+ * between two sellers use the same record.
+ */
+function aspTrackRecord(q: Record<string, string>) {
+  const b = q.store ? getBusiness(q.store) : null;
+  if (!b) throw new Error("store query parameter must be a listed store id");
+  const sales = listSales(b.id) as { at: string; upstream_status: number; amount_atomic: string }[];
+  const delivered = sales.filter((s) => s.upstream_status < 400);
+  const paid = delivered.filter((s) => s.amount_atomic !== "0");
+  const failed = sales.filter((s) => s.upstream_status >= 400);
+  const at = sales.map((s) => s.at).sort();
+  const r = retention(b.id)[0] ?? null;
+  const pick = (hours: number) => uptime(hours).find((u) => u.business_id === b.id) ?? null;
+
+  return {
+    store: b.id,
+    title: b.title,
+    listing: b.listing ?? { status: "not registered" },
+    level: sellerLevels().get(b.id) ?? null,
+    delivery: {
+      paidCalls: paid.length,
+      deliveredCalls: delivered.length,
+      failedCalls: failed.length,
+      // Share of recorded calls the upstream answered without an error status.
+      successRate: sales.length ? +(delivered.length / sales.length).toFixed(3) : null,
+      firstCall: at[0] ?? null,
+      lastCall: at[at.length - 1] ?? null,
+    },
+    uptime: { last24h: pick(24), last7d: pick(168) },
+    buyers: r ? { buyers: r.buyers, repeatBuyers: r.repeatBuyers, repeatRate: r.repeatRate, returningAfterADay: r.returningAfterADay } : null,
+    receipts: { issuer: "vendo", alg: "Ed25519", verify: `${env.publicUrl}/vendo/receipts/verify`, publicKey: `${env.publicUrl}/.well-known/vendo-receipts.json` },
+    checkedAt: new Date().toISOString(),
+    note: "Delivery record observed by Vendo for this store. Evidence for an evaluation or a buying decision, not a guarantee of future delivery.",
+  };
 }
 
 /** One call before paying someone: registry status + sanctions + verified wallet. */

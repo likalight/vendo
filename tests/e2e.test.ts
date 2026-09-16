@@ -225,3 +225,23 @@ test("levels: stores start as new sellers with a path to rising", async () => {
   assert.equal(fx.sellerLevel.level, "new");
   assert.match(fx.sellerLevel.next, /Rising/);
 });
+
+test("track record: paid delivery evidence for a listed store", async () => {
+  // Paywalled like any other listed service.
+  assert.equal((await get("/trackrecord/asp?store=bookkeeper")).status, 402);
+
+  const paid = { "x-vendo-demo-paid": "1" };
+  await get("/bookkeeper/statement?business=fx", paid);
+
+  const r = await get("/trackrecord/asp?store=bookkeeper", paid);
+  assert.equal(r.status, 200);
+  const body = await r.json();
+  assert.equal(body.store, "bookkeeper");
+  assert.ok(body.delivery.paidCalls >= 1, "at least the call just made is recorded");
+  assert.ok(body.delivery.successRate > 0 && body.delivery.successRate <= 1);
+  assert.equal(body.level.level, "new");
+  assert.match(body.receipts.verify, /\/vendo\/receipts\/verify$/);
+
+  // An unknown store is a caller error, not a 502.
+  assert.equal((await get("/trackrecord/asp?store=not-a-store", paid)).status, 400);
+});

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vendo</title>
-<meta name="description" content="Vendo screens the counterparty before an AI agent pays, and returns a signed receipt after. Business data services on OKX AI, paid per call in USDT0 on X Layer.">
+<meta name="description" content="Vendo turns a business API or website form into a paid endpoint listed on OKX AI, so AI agents can buy from it. Settled per call in USDT0 on X Layer.">
 <style>
 /* Tokens match public/app.html and public/proof.html so the landing page and the product
    are one continuous surface. Light first, dark via prefers-color-scheme. */
@@ -33,7 +33,6 @@ a:hover{text-decoration:underline}
 code,pre{font-family:var(--mono)}
 .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 
-/* nav: single line, 64px */
 header{position:sticky;top:0;z-index:5;background:var(--surface);
   border-bottom:1px solid var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
@@ -44,7 +43,6 @@ header{position:sticky;top:0;z-index:5;background:var(--surface);
 .nav ul a:hover{color:var(--ink);text-decoration:none}
 @media(max-width:720px){.nav ul li.opt{display:none}}
 
-/* buttons: one shape system. pill for interactive, 14px for containers. */
 .btn{display:inline-flex;align-items:center;justify-content:center;
   font:600 .95rem var(--font);border-radius:999px;padding:11px 22px;
   border:1px solid var(--line);background:var(--surface);color:var(--ink);
@@ -53,105 +51,108 @@ header{position:sticky;top:0;z-index:5;background:var(--surface);
 .btn:hover{text-decoration:none;border-color:var(--brand)}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-.btn.primary:hover{background:var(--brand);filter:brightness(1.08)}
+.btn.primary:hover{filter:brightness(1.08)}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}.btn:active{transform:none}}
 
 h1,h2,h3{letter-spacing:-.02em;margin:0}
-h1{font-size:clamp(2.1rem,5.2vw,3.4rem);line-height:1.06;font-weight:800}
+h1{font-size:clamp(2.1rem,5.2vw,3.35rem);line-height:1.06;font-weight:800}
 h2{font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.15;font-weight:750}
 h3{font-size:1.02rem;font-weight:700}
-.lede{color:var(--muted);font-size:1.08rem;max-width:34ch}
+.lede{color:var(--muted);font-size:1.08rem;max-width:36ch}
 .eyebrow{font:700 .74rem var(--font);letter-spacing:.14em;text-transform:uppercase;
   color:var(--brand);margin:0 0 12px}
+.sub{color:var(--muted);max-width:62ch;margin:10px 0 0}
 
-/* ---------- hero: asymmetric split, copy left, real API output right ---------- */
-.hero{padding:76px 0 64px}
-.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
+/* hero */
+.hero{padding:72px 0 60px}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:52px;align-items:center}
 .hero .cta{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap}
 
-/* real request/response sample */
 .sample{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden}
 .sample-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:11px 15px;border-bottom:1px solid var(--line);background:var(--surface-2)}
-.sample-bar code{font-size:.79rem;color:var(--muted);word-break:break-all}
-.price{font:700 .75rem var(--mono);color:var(--ink);background:var(--bg);
-  border:1px solid var(--line);border-radius:999px;padding:2px 10px;white-space:nowrap}
-.sample pre{margin:0;padding:15px;font-size:.795rem;line-height:1.62;overflow-x:auto;
-  color:var(--ink)}
-.k{color:var(--muted)}
-.s{color:var(--paid)}
-.block-val{color:var(--warn);font-weight:700}
+.sample-bar b{font:700 .78rem var(--mono);color:var(--muted)}
+.sample pre{margin:0;padding:15px;font-size:.795rem;line-height:1.66;overflow-x:auto}
 .sample-foot{border-top:1px solid var(--line);padding:11px 15px;font-size:.8rem;
   color:var(--muted)}
+.c-cmd{color:var(--muted)}
+.c-ok{color:var(--paid);font-weight:700}
+.c-key{color:var(--ink);font-weight:700}
+.c-val{color:var(--brand)}
 
-/* ---------- flow: numbered rail. different family from hero. ---------- */
-.flow{padding:60px 0;border-top:1px solid var(--line)}
-.rail{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:34px;
-  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
-  background:var(--surface)}
-.step{padding:22px 20px;border-right:1px solid var(--line)}
+/* steps rail */
+.steps{padding:58px 0;border-top:1px solid var(--line)}
+.rail{display:grid;grid-template-columns:repeat(4,1fr);margin-top:30px;
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.step{padding:20px;border-right:1px solid var(--line)}
 .step:last-child{border-right:0}
+.step .num{font:700 .74rem var(--mono);color:var(--brand);display:block;margin-bottom:9px}
 .step b{display:block;font-size:.95rem;margin-bottom:6px}
-.step p{margin:0;color:var(--muted);font-size:.89rem}
-.step .num{font:700 .74rem var(--mono);color:var(--brand);display:block;margin-bottom:10px}
+.step p{margin:0;color:var(--muted);font-size:.88rem}
+.step .say{display:block;margin-top:9px;background:var(--surface-2);border-radius:8px;
+  padding:8px 10px;font:.74rem/1.5 var(--mono);color:var(--ink);word-break:break-word}
 
-/* ---------- bento: what Vendo verifies. 5 cells, varied fills. ---------- */
-.verify{padding:60px 0;border-top:1px solid var(--line)}
-.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px}
-.cell{border:1px solid var(--line);border-radius:var(--r);padding:20px;
-  background:var(--surface)}
+/* bento */
+.does{padding:58px 0;border-top:1px solid var(--line)}
+.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}
+.cell{border:1px solid var(--line);border-radius:var(--r);padding:20px;background:var(--surface)}
 .cell p{color:var(--muted);font-size:.9rem;margin:8px 0 0}
 .cell.wide{grid-column:span 2;
   background:linear-gradient(135deg,var(--brand-soft),var(--surface) 70%)}
 .cell.tint{background:var(--surface-2)}
-.cell .val{font:700 1.5rem var(--mono);color:var(--ink);display:block;margin-bottom:4px;
+
+/* price menu */
+.menu{padding:58px 0;border-top:1px solid var(--line)}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;margin-top:26px}
+.mrow{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+  padding:15px 0;border-bottom:1px solid var(--line)}
+.mrow b{font-size:.96rem;font-weight:700}
+.mrow p{margin:3px 0 0;color:var(--muted);font-size:.86rem}
+.mrow .amt{font:700 .85rem var(--mono);color:var(--ink);white-space:nowrap;
   font-variant-numeric:tabular-nums}
 
-/* ---------- sell: 2-col split ---------- */
-.sell{padding:60px 0;border-top:1px solid var(--line)}
-.sell-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
-.sell ul{margin:20px 0 0;padding:0;list-style:none}
-.sell li{padding:13px 0;border-bottom:1px solid var(--line);color:var(--muted);
-  font-size:.93rem}
-.sell li:last-child{border-bottom:0}
-.sell li b{color:var(--ink);display:block;font-size:.95rem;margin-bottom:2px}
+/* assist split */
+.assist{padding:58px 0;border-top:1px solid var(--line)}
+.assist-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:44px;align-items:center}
+.flow{display:grid;gap:8px}
+.fbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:13px 15px;font-size:.9rem}
+.fbox b{display:block;font-size:.88rem;margin-bottom:2px}
+.fbox span{color:var(--muted)}
 
-/* ---------- close ---------- */
-.close{padding:60px 0;border-top:1px solid var(--line)}
+/* close */
+.close{padding:58px 0;border-top:1px solid var(--line)}
 .close-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-  padding:40px;display:grid;grid-template-columns:1.2fr .8fr;gap:36px;align-items:center}
+  padding:38px;display:grid;grid-template-columns:1.2fr .8fr;gap:34px;align-items:center}
 .stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
 .chip{font:600 .8rem var(--font);color:var(--muted);background:var(--bg);
   border:1px solid var(--line);border-radius:999px;padding:5px 13px}
 
-footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);
-  font-size:.88rem}
+footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:.88rem}
 .foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .foot a{color:var(--muted)}
-.note{margin-top:14px;font-size:.82rem;max-width:70ch}
+.note{margin-top:14px;font-size:.82rem;max-width:74ch}
 
 @media(max-width:900px){
-  /* Single column: shrink the hero so the CTAs stay above the fold on short viewports. */
-  .hero{padding:44px 0 44px}
+  .hero{padding:44px 0}
   .hero h1{font-size:clamp(1.9rem,4.6vw,2.4rem)}
-  .hero .lede{font-size:1rem;max-width:46ch}
+  .hero .lede{font-size:1rem;max-width:48ch}
   .hero .cta{margin-top:20px}
-  .hero-grid,.sell-grid,.close-card{grid-template-columns:1fr;gap:34px}
+  .hero-grid,.assist-grid,.close-card,.menu-grid{grid-template-columns:1fr;gap:32px}
+  .menu-grid{gap:0}
   .rail{grid-template-columns:1fr 1fr}
   .step{border-bottom:1px solid var(--line)}
   .step:nth-child(2n){border-right:0}
   .step:nth-last-child(-n+2){border-bottom:0}
   .bento{grid-template-columns:1fr 1fr}
-  .cell.wide{grid-column:span 2}
 }
 @media(max-width:560px){
-  .hero{padding:52px 0 44px}
   .rail,.bento{grid-template-columns:1fr}
   .step{border-right:0;border-bottom:1px solid var(--line)}
   .step:last-child{border-bottom:0}
   .cell.wide{grid-column:span 1}
-  .close-card{padding:26px}
+  .close-card{padding:24px}
   .lede{max-width:none}
 }
 </style>
@@ -172,129 +173,175 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);
 
 <main>
 
-  <!-- HERO: asymmetric split. Max 4 text elements, no eyebrow. -->
+  <!-- HERO -->
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <h1>Know who your agent is paying.</h1>
-        <p class="lede">Vendo screens the counterparty before the payment leaves, and returns a
-          signed receipt after it lands.</p>
+        <h1>Get paid per call by AI agents.</h1>
+        <p class="lede">Connect an API or a website form. Vendo turns it into a paid endpoint,
+          listed on OKX AI.</p>
         <div class="cta">
-          <a class="btn primary" href="/proof">See live proof</a>
-          <a class="btn" href="/app">Open dashboard</a>
+          <a class="btn primary" href="/app">Open dashboard</a>
+          <a class="btn" href="/proof">See live proof</a>
         </div>
       </div>
 
-      <!-- Real output: this is the actual response schema from src/app.ts counterpartyCheck().
-           The subject name is the fixture used in scripts/test-finance.ts, not a real company. -->
+      <!-- The self-check from the OKX A2MCP guide, step 5. This is what listing review validates. -->
       <div class="sample">
-        <div class="sample-bar">
-          <code>GET /counterparty/check</code>
-          <span class="price">$0.03</span>
-        </div>
-<pre><code><span class="k">{</span>
-  <span class="k">"verdict":</span> <span class="block-val">"block"</span><span class="k">,</span>
-  <span class="k">"reasons":</span> <span class="k">[</span>
-    <span class="s">"Possible OFAC sanctions match:
-     Example Sanctioned Trading LLC"</span><span class="k">,</span>
-    <span class="s">"Wallet is not a verified
-     business wallet"</span>
-  <span class="k">],</span>
-  <span class="k">"registry":</span> <span class="k">{</span> <span class="k">"status":</span> <span class="s">"ACTIVE"</span><span class="k">,</span> <span class="k">"lei":</span> <span class="s">"…"</span> <span class="k">},</span>
-  <span class="k">"tier":</span> <span class="s">"standard"</span>
-<span class="k">}</span></code></pre>
-        <div class="sample-foot">The agent does not pay. Screening is a risk signal, not legal
-          or compliance advice.</div>
+        <div class="sample-bar"><b>ENDPOINT SELF CHECK</b></div>
+<pre><code><span class="c-cmd">$ curl -i https://your-store.example/v1/rates</span>
+
+<span class="c-ok">HTTP/1.1 402 Payment Required</span>
+<span class="c-key">PAYMENT-REQUIRED:</span> <span class="c-val">eyJ4NDAyVmVyc2lvbiI6Miwi…</span>
+
+<span class="c-cmd">decoded challenge</span>
+<span class="c-key">network</span>  <span class="c-val">eip155:196</span>   <span class="c-cmd">X Layer</span>
+<span class="c-key">asset</span>    <span class="c-val">USD₮0</span>
+<span class="c-key">amount</span>   <span class="c-val">10000</span>        <span class="c-cmd">0.01</span>
+<span class="c-key">payTo</span>    <span class="c-val">your wallet</span></code></pre>
+        <div class="sample-foot">Vendo produces this for every route you add. The
+          <code>PAYMENT-REQUIRED</code> header is what OKX AI listing review checks.</div>
       </div>
     </div>
   </section>
 
-  <!-- FLOW: numbered rail. -->
-  <section class="flow">
+  <!-- STEPS: the real OKX registration flow -->
+  <section class="steps">
     <div class="wrap">
-      <h2>What happens when an agent pays</h2>
+      <h2>How a business gets onto OKX AI</h2>
+      <p class="sub">On OKX AI you register by talking to your agent, not by filling in a web form.
+        Vendo's job is steps one and two: turning what you already have into a compliant endpoint.</p>
       <div class="rail">
         <div class="step">
           <span class="num">01</span>
-          <b>Agent calls the endpoint</b>
-          <p>It finds the service on OKX AI, or through Vendo's MCP server.</p>
+          <b>Connect what you have</b>
+          <p>Import an OpenAPI file, add routes by hand, or point Vendo at a form on your site.</p>
         </div>
         <div class="step">
           <span class="num">02</span>
-          <b>Vendo asks for payment</b>
-          <p>HTTP 402 with the x402 challenge, priced in USDT0 on X Layer.</p>
+          <b>Vendo makes it compliant</b>
+          <p>You get an HTTPS endpoint that answers with a valid x402 challenge, priced per call.</p>
         </div>
         <div class="step">
           <span class="num">03</span>
-          <b>The wallet settles onchain</b>
-          <p>Funds go straight to the seller's wallet. Vendo never holds them.</p>
+          <b>Register through your agent</b>
+          <p>Install Onchain OS, then ask your agent to register the endpoint as an A2MCP service.</p>
+          <span class="say">Help me register an A2MCP ASP on OKX.AI using OKX Agent Identity from Onchain OS</span>
         </div>
         <div class="step">
           <span class="num">04</span>
-          <b>Response plus a receipt</b>
-          <p>Every paid reply carries an Ed25519 receipt anyone can verify.</p>
+          <b>List it and go live</b>
+          <p>Review finishes within 24 hours. After that every call bills and settles on its own.</p>
+          <span class="say">Help me list my ASP on OKX.AI using Onchain OS</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- BENTO: what gets verified. 5 cells, 5 items, varied fills. -->
-  <section class="verify">
+  <!-- BENTO -->
+  <section class="does">
     <div class="wrap">
-      <p class="eyebrow">What Vendo checks</p>
-      <h2>Four sources, one verdict</h2>
+      <p class="eyebrow">What Vendo handles</p>
+      <h2>The parts a normal business should not have to build</h2>
       <div class="bento">
         <div class="cell wide">
-          <h3>Legal entity, sanctions and wallet in one call</h3>
-          <p>Vendo resolves the company against the GLEIF registry, screens the resolved legal
-            name against the US OFAC sanctions list, and confirms the wallet actually belongs to
-            that entity. One request returns pass, review or block with the reasons attached.</p>
+          <h3>A compliant paid endpoint, without writing payment code</h3>
+          <p>Vendo runs the x402 paywall using the OKX Payment SDK, forwards the paid call to your
+            real API with your credentials attached, and settles to your wallet. Your API key is
+            encrypted at rest and never returned by any Vendo endpoint. For self listed stores
+            Vendo never holds your money.</p>
         </div>
         <div class="cell tint">
-          <span class="val">GLEIF</span>
-          <h3>Legal entity</h3>
-          <p>Is the company real, and is its registration still active?</p>
+          <h3>Agent readable by default</h3>
+          <p>Every store gets an OpenAPI file, MCP tool definitions and an entry in
+            <code>llms.txt</code>.</p>
         </div>
         <div class="cell tint">
-          <span class="val">OFAC</span>
-          <h3>Sanctions</h3>
-          <p>Name screening against the US Treasury SDN list.</p>
+          <h3>Prices and tiers</h3>
+          <p>Set a price per route, add up to three tiers, or sell prepaid call packs.</p>
         </div>
         <div class="cell">
-          <span class="val">LEI</span>
-          <h3>Verified wallets</h3>
-          <p>A company signs a challenge to bind its wallet to its legal entity.</p>
+          <h3>Signed receipts</h3>
+          <p>Every paid response carries an Ed25519 receipt that anyone can verify later.</p>
         </div>
         <div class="cell">
-          <span class="val">EDGAR</span>
-          <h3>Filings</h3>
-          <p>Profile and latest SEC filings for US public companies.</p>
+          <h3>Uptime and levels</h3>
+          <p>Vendo probes your upstream, tracks repeat buyers, and earns you a seller level.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SELL: 2-col split. -->
-  <section class="sell">
-    <div class="wrap sell-grid">
+  <!-- PRICE MENU -->
+  <section class="menu">
+    <div class="wrap">
+      <h2>Services Vendo runs on its own toolkit</h2>
+      <p class="sub">Vendo sells through the same pipeline it gives you. These are real endpoints
+        with real prices, listed the same way yours would be.</p>
+      <div class="menu-grid">
+        <div>
+          <div class="mrow">
+            <div><b>Counterparty Check</b>
+              <p>Legal entity status, OFAC sanctions screen and verified wallet in one call.</p></div>
+            <span class="amt">0.03</span>
+          </div>
+          <div class="mrow">
+            <div><b>ASP track record</b>
+              <p>Delivery history for a listed store: paid calls, success rate, uptime, repeat buyers.</p></div>
+            <span class="amt">0.01</span>
+          </div>
+          <div class="mrow">
+            <div><b>Company filings</b>
+              <p>US public company profile and its latest SEC filings by CIK.</p></div>
+            <span class="amt">0.01</span>
+          </div>
+        </div>
+        <div>
+          <div class="mrow">
+            <div><b>Invoice calculator</b>
+              <p>Net, tax and gross for a stablecoin invoice, converted at reference rates.</p></div>
+            <span class="amt">0.005</span>
+          </div>
+          <div class="mrow">
+            <div><b>Company registry</b>
+              <p>Look up a legal entity in the global LEI registry.</p></div>
+            <span class="amt">0.01</span>
+          </div>
+          <div class="mrow">
+            <div><b>Bookkeeper</b>
+              <p>Monthly revenue, costs and net for a store, as JSON or CSV.</p></div>
+            <span class="amt">0.02</span>
+          </div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:20px">Prices in USDT0. Live endpoints and recorded payments
+        are on the <a href="/proof">proof page</a>.</p>
+    </div>
+  </section>
+
+  <!-- ASSIST -->
+  <section class="assist">
+    <div class="wrap assist-grid">
       <div>
-        <h2>Sell your own data the same way</h2>
-        <p class="lede">Connect an API or a form on your site, set a price per call, and let
-          agents buy it.</p>
-        <div class="cta" style="margin-top:24px">
+        <p class="eyebrow">The other side</p>
+        <h2>Buying, from the page you are already on</h2>
+        <p class="sub">Vendo Assist is a Chrome extension. Select text on any page, right click,
+          and it finds a listed service that fits, fills in the parameters, and pays for the call
+          with a capped wallet. It only reads the page when you ask it to.</p>
+        <div class="cta" style="margin-top:22px">
           <a class="btn" href="/how">How it works</a>
         </div>
       </div>
-      <ul>
-        <li><b>Bring an API</b>Import an OpenAPI file or add routes by hand. Your upstream key is
-          encrypted at rest and never returned.</li>
-        <li><b>Or bring a website</b>Point Vendo at a quote or booking form. Domain ownership is
-          proven before anything goes live.</li>
-        <li><b>Price per call, or in packs</b>Set a price per route, add up to three tiers, and
-          sell prepaid call packs at a discount.</li>
-        <li><b>Get paid directly</b>Buyers pay your wallet on every call. Vendo never custodies
-          funds for self listed stores.</li>
-      </ul>
+      <div class="flow">
+        <div class="fbox"><b>Select and ask</b><span>Highlight a company name, right click, choose
+          Ask Vendo Assist.</span></div>
+        <div class="fbox"><b>Vendo matches a service</b><span>It searches listed stores and
+          pre fills the parameters it can read from the text.</span></div>
+        <div class="fbox"><b>You confirm the price</b><span>Nothing is paid until you approve the
+          exact amount. Per call and daily caps apply.</span></div>
+        <div class="fbox"><b>Result and receipt</b><span>The answer comes back with a signed
+          receipt, and the cost lands in your books.</span></div>
+      </div>
     </div>
   </section>
 
@@ -303,9 +350,8 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);
     <div class="wrap">
       <div class="close-card">
         <div>
-          <p class="eyebrow">Built on OKX</p>
-          <h2>Running on X Layer today</h2>
-          <p class="lede" style="max-width:46ch">Payments settle in USDT0 on X Layer through the
+          <h2>Built on OKX</h2>
+          <p class="lede" style="max-width:48ch">Payments settle in USDT0 on X Layer through the
             OKX Payment SDK. Services list on OKX AI as A2MCP endpoints.</p>
           <div class="stack">
             <span class="chip">OKX AI</span>
@@ -316,8 +362,8 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);
           </div>
         </div>
         <div class="cta" style="margin:0">
-          <a class="btn primary" href="/proof">See live proof</a>
-          <a class="btn" href="/app">Open dashboard</a>
+          <a class="btn primary" href="/app">Open dashboard</a>
+          <a class="btn" href="/proof">See live proof</a>
         </div>
       </div>
     </div>
@@ -335,9 +381,9 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);
         <a href="https://github.com/likalight/vendo">GitHub</a>
       </span>
     </div>
-    <p class="note">Screening output is a risk signal to support a payment decision. It is not
-      legal or compliance advice. Only list APIs and websites you own or have permission to
-      sell.</p>
+    <p class="note">Only list APIs and websites you own or have permission to sell. Website forms
+      require domain ownership verification. Screening output is a risk signal to support a payment
+      decision, not legal or compliance advice.</p>
   </div>
 </footer>
 
