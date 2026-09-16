@@ -33,6 +33,7 @@ import { createChallenge, completeChallenge, lookupWallet } from "./entity-walle
 import { searchServices, buildCallUrl } from "./search.js";
 import { sellerLevels } from "./levels.js";
 import { fundingPlan, usdt0Balance } from "./funding.js";
+import { validateEndpoint } from "./validate.js";
 
 seedIfEmpty();
 
@@ -119,6 +120,25 @@ app.get("/proof", (_q, s) => s.type("html").send(page("proof.html")));
 app.get("/how", (_q, s) => s.type("html").send(page("how.html")));
 app.get("/health", (_q, s) => s.json({ ok: true, offline: OFFLINE, network: env.networkName, chainId: env.network.chainId, llm: llmEnabled(), assistBuyer: !!process.env.BUYER_PRIVATE_KEY }));
 app.get(["/llms.txt", "/vendo/llms.txt"], (_q, s) => s.type("text/plain").send(llmsTxt(listBusinesses())));
+
+// Paste-once install for any agent host that reads a SKILL.md. Served with this deployment's real
+// base URL substituted, so an agent can use it without being told where Vendo lives.
+app.get(["/SKILL.md", "/skill.md"], (_q, s) => {
+  const md = readFileSync(new URL("../skills/vendo/SKILL.md", import.meta.url), "utf8")
+    .replace(/\{VENDO_URL\}/g, env.publicUrl)
+    .replace(/https:\/\/vendo\.example/g, env.publicUrl);
+  s.type("text/markdown").send(md);
+});
+
+// Free: check an A2MCP endpoint against the OKX AI listing rules before submitting it for review.
+// Vendo's own first submission was rejected for advertising the wrong chain, so this exists to
+// catch that class of mistake before it costs a review cycle.
+app.get("/vendo/validate", rateLimit(60), async (q, s) => {
+  const url = String(q.query.url ?? "");
+  if (!url) return s.status(400).json({ errors: ["url query parameter is required"] });
+  try { s.json(await validateEndpoint(url)); }
+  catch (e: any) { s.status(400).json({ errors: [String(e.message)] }); }
+});
 app.get("/vendo/kit/:id/:file", (q, s) => {
   const b = getBusiness(q.params.id);
   if (!b) return s.status(404).json({ error: "unknown business" });
