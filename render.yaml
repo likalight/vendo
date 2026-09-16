@@ -24,9 +24,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # "testnet" (X Layer testnet, chain 1952) or "mainnet" (X Layer, chain 196)
+      # X Layer mainnet (chain 196), matching the chain the OKX AI agent identity is registered on.
       - key: NETWORK
-        value: testnet
+        value: mainnet
       - key: HEALTH_CHECK_MINUTES
         value: "10"
       - key: BILL_CHECK_MINUTES
