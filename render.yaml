@@ -1,0 +1,66 @@
+# Render blueprint. Deploys the Dockerfile as a public HTTPS web service.
+#
+# Free plan notes:
+#   - No persistent disk, so data/ is wiped on every deploy. The receipt signing key is
+#     supplied through VENDO_RECEIPT_KEY instead of being generated into data/, so receipts
+#     stay verifiable across restarts. The sales ledger does not survive a redeploy.
+#   - Free services spin down after ~15 minutes idle. Point a free uptime pinger at /health
+#     every 10 minutes to keep it warm, or OKX listing review may hit a sleeping service.
+#
+# Every secret is marked sync: false, which means Render prompts for it in the dashboard
+# and it is never stored in this repo.
+
+services:
+  - type: web
+    name: vendo
+    runtime: docker
+    plan: free
+    # Singapore keeps the option of calling Claude/OpenAI/Gemini open. OKX's docs warn those
+    # vendors refuse connections from Hong Kong nodes.
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # "testnet" (X Layer testnet, chain 1952) or "mainnet" (X Layer, chain 196)
+      - key: NETWORK
+        value: testnet
+      - key: HEALTH_CHECK_MINUTES
+        value: "10"
+      - key: BILL_CHECK_MINUTES
+        value: "30"
+
+      # --- Set these in the Render dashboard ---
+      # OKX Developer Portal: https://web3.okx.com/onchainos/dev-portal
+      - key: OKX_API_KEY
+        sync: false
+      - key: OKX_SECRET_KEY
+        sync: false
+      - key: OKX_PASSPHRASE
+        sync: false
+      # Local HMAC key for signing 402 challenges
+      - key: MPPX_SECRET_KEY
+        sync: false
+      # Your X Layer wallet, where revenue for Vendo's own services lands
+      - key: DEFAULT_PAY_TO
+        sync: false
+      # Protects the dashboard, treasury, payouts and bills APIs
+      - key: VENDO_ADMIN_TOKEN
+        sync: false
+      # Lets the Assist extension run paid tasks
+      - key: VENDO_ASSIST_TOKEN
+        sync: false
+      # Ed25519 signing key (base64 PKCS8). Supplied here so receipts survive a redeploy
+      # on the free plan, which has no persistent disk.
+      - key: VENDO_RECEIPT_KEY
+        sync: false
+      # Required by SEC EDGAR fair access rules, format: "AppName contact@email"
+      - key: SEC_USER_AGENT
+        sync: false
+      # Set this to the service's own URL once Render assigns it, e.g.
+      # https://vendo.onrender.com — it becomes the realm in the x402 challenge and the
+      # base URL in every generated listing, so it must be the real public address.
+      - key: PUBLIC_URL
+        sync: false
