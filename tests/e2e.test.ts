@@ -273,6 +273,7 @@ test("import: a store can declare that its upstream speaks x402", async () => {
     description: "A service that already speaks x402 elsewhere, re-exposed by Vendo as an X Layer listing.",
     baseUrl: "https://example.com", payTo: "0x4444444444444444444444444444444444444444",
     ownerApproved: true, upstreamX402: true,
+    upstreamPermission: "Operated by us; the upstream is our own endpoint on another chain.",
     routes: [{ method: "GET", path: "/v1/thing", priceUsd: 0.02, summary: "Paid upstream", params: [] }],
   });
   assert.equal(r.status, 201);
@@ -291,4 +292,28 @@ test("import: a store can declare that its upstream speaks x402", async () => {
   });
   assert.equal(bad.status, 400);
   assert.ok((await bad.json()).errors.some((e: string) => /upstreamX402/.test(e)));
+});
+
+
+test("import: reselling a paid upstream requires a stated permission basis", async () => {
+  // Vendo lists what you own or may sell. An imported paid upstream has to say which.
+  const r = await post("/vendo/api/businesses", {
+    id: "imported-nopermission", title: "Imported without a basis",
+    description: "Declares a paid upstream but states no basis for reselling it.",
+    baseUrl: "https://example.com", payTo: "0x6666666666666666666666666666666666666666",
+    ownerApproved: true, upstreamX402: true,
+    routes: [{ method: "GET", path: "/v1/thing", priceUsd: 0.02, summary: "Paid upstream", params: [] }],
+  });
+  assert.equal(r.status, 400);
+  assert.ok((await r.json()).errors.some((e: string) => /upstreamPermission/.test(e)));
+
+  // A basis that is present but empty is not a basis.
+  const thin = await post("/vendo/api/businesses", {
+    id: "imported-thin", title: "Imported with a thin basis",
+    description: "States a basis too short to mean anything at all.",
+    baseUrl: "https://example.com", payTo: "0x7777777777777777777777777777777777777777",
+    ownerApproved: true, upstreamX402: true, upstreamPermission: "ok",
+    routes: [{ method: "GET", path: "/v1/thing", priceUsd: 0.02, summary: "Paid upstream", params: [] }],
+  });
+  assert.equal(thin.status, 400);
 });

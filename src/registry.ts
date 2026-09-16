@@ -53,6 +53,9 @@ export function validateBusiness(input: any): { ok: true; value: Business } | { 
     if (authType === "query" && !/^[A-Za-z0-9_.-]{1,60}$/.test(String(auth.paramName ?? ""))) e.push("upstreamAuth needs a query parameter name");
   }
   if (input?.upstreamX402 != null && typeof input.upstreamX402 !== "boolean") e.push("upstreamX402 must be true or false");
+  if (input?.upstreamX402 === true && String(input?.upstreamPermission ?? "").trim().length < 20) {
+    e.push("upstreamPermission is required when the upstream is a paid service: state who owns it and why you may resell it (at least 20 characters)");
+  }
   if (input?.ownerApproved !== true) e.push("the business owner must approve listing (ownerApproved: true)");
   const routes: SellRoute[] = Array.isArray(input?.routes) ? input.routes : [];
   if (!routes.length) e.push("at least one route is required");
@@ -84,6 +87,7 @@ export function validateBusiness(input: any): { ok: true; value: Business } | { 
       payTo: input.payTo || undefined, licence: String(input.licence ?? "Listed with the owner's permission."),
       headers: input.headers, routes, local: !!input.local, ownerApproved: true, webForm: input.webForm,
       upstreamX402: !!input.upstreamX402,
+      upstreamPermission: input.upstreamX402 ? String(input.upstreamPermission).trim() : undefined,
       listingModel, feeBps: listingModel === "managed" ? feeBps : undefined,
       secretHeaders: auth ? seal(authType === "query"
         ? { __query: JSON.stringify({ [String(auth.paramName)]: String(auth.value) }) }

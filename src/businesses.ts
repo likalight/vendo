@@ -44,6 +44,13 @@ export type Business = {
    * Vendo pays it out of what the buyer paid, never more, and reports the cost on the response.
    */
   upstreamX402?: boolean;
+  /**
+   * Required when upstreamX402 is set. Reselling someone else's paid service is only acceptable on
+   * a stated basis: you own it, the owner agreed, or its licence permits resale. Vendo's rule is
+   * that you list what you own or have permission to sell, so the basis is recorded and shown
+   * publicly rather than left to good intentions.
+   */
+  upstreamPermission?: string;
   /** Encrypted upstream credentials (e.g. API key header). Never returned by the API. */
   secretHeaders?: string;
   /** paused stores are hidden from discovery and reject calls without charging */

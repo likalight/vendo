@@ -76,22 +76,26 @@ export async function fetchPaidUpstream(url: string, init: RequestInit, budgetUs
       contentType: "application/json", costUsd: 0, refused: "no upstream wallet" };
   }
 
-  let required: any, accept: any;
-  try {
-    required = p.http.getPaymentRequiredResponse((h) => first.headers.get(h));
-    accept = required?.accepts?.[0];
-  } catch { accept = null; }
+  const challengeBody = await first.clone().text().catch(() => "");
+  const required = readChallenge(p, first, challengeBody);
 
-  if (!accept) {
+  if (!required) {
     return { status: 502, body: JSON.stringify({ error: "Upstream asked for payment but its challenge could not be read." }),
       contentType: "application/json", costUsd: 0, refused: "unreadable challenge" };
   }
 
-  const network = String(accept.network ?? "");
-  if (!p.networks.includes(network)) {
-    return { status: 502, body: JSON.stringify({ error: `Upstream wants payment on ${network}, which Vendo is not funded for.`, allowed: p.networks }),
-      contentType: "application/json", costUsd: 0, refused: `network ${network} not allowed` };
+  // An upstream may offer several ways to pay. Take the first that is the exact scheme on a chain
+  // Vendo actually holds funds on, rather than assuming the first entry is usable.
+  const options: any[] = Array.isArray(required.accepts) ? required.accepts : [];
+  const accept = options.find((a) => a?.scheme === "exact" && p.networks.includes(String(a?.network ?? "")));
+
+  if (!accept) {
+    const offered = options.map((a) => `${a?.scheme}@${a?.network}`).join(", ") || "none";
+    return { status: 502, body: JSON.stringify({ error: "Upstream offers no payment option Vendo is funded for.", offered, allowed: p.networks }),
+      contentType: "application/json", costUsd: 0, refused: `no usable option (offered: ${offered})` };
   }
+
+  const network = String(accept.network);
 
   // Stablecoins used here are 6 decimals. Treat minor units as USD micros.
   const minor = Number(accept.amount ?? accept.maxAmountRequired ?? 0);
@@ -112,13 +116,66 @@ export async function fetchPaidUpstream(url: string, init: RequestInit, budgetUs
       contentType: "application/json", costUsd: 0, refused: "upstream above budget" };
   }
 
-  // Sign the challenge, then replay the original request carrying the payment signature.
-  const payload = await p.http.createPaymentPayload(required);
-  const signedInit: RequestInit = { ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...p.http.encodePaymentSignatureHeader(payload) } };
-  const paid = await fetch(url, signedInit);
+  // Sign the challenge, then replay the original request carrying the payment signature. Only the
+  // chosen option is offered, so the SDK cannot pick a scheme or chain Vendo is not funded for.
+  //
+  // Implementations differ on field names: the OKX A2MCP guide uses `amount` and an object
+  // `resource`, while OKX's own mock merchant uses `maxAmountRequired` and a string `resource`.
+  // Normalise to what the signing scheme expects rather than assuming one dialect.
+  const normalised = {
+    ...required,
+    x402Version: required.x402Version ?? 2,
+    resource: typeof required.resource === "object" && required.resource
+      ? required.resource
+      : { url: String(required.resource ?? url), description: "", mimeType: "application/json" },
+    accepts: [{ ...accept, amount: String(accept.amount ?? accept.maxAmountRequired), maxTimeoutSeconds: Number(accept.maxTimeoutSeconds ?? 300) }],
+  };
+
+  let paid: Response;
+  try {
+    const payload = await p.http.createPaymentPayload(normalised as any);
+    const signedInit: RequestInit = { ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...p.http.encodePaymentSignatureHeader(payload) } };
+    paid = await fetch(url, signedInit);
+  } catch (e: any) {
+    // An upstream Vendo cannot sign for must not take the route down with it.
+    return { status: 502, body: JSON.stringify({ error: "Could not sign a payment this upstream would accept.", detail: String(e?.message ?? e) }),
+      contentType: "application/json", costUsd: 0, refused: "signing failed" };
+  }
   const body = await paid.text();
+
+  // A second 402 means the upstream rejected the payment, usually because Vendo holds no balance in
+  // the asset it asked for. Nothing was spent, so do not report a cost that was never incurred.
+  if (paid.status === 402) {
+    return { status: 502, body: JSON.stringify({ error: "Upstream rejected the payment. Vendo may hold no balance in the asset it requires.", asset: accept.asset, network }),
+      contentType: "application/json", costUsd: 0, refused: "payment rejected by upstream" };
+  }
+
   let tx: string | undefined;
   try { tx = (p.http.getPaymentSettleResponse((h: string) => paid.headers.get(h)) as any)?.transaction; } catch { /* optional */ }
 
   return { status: paid.status, body, contentType: paid.headers.get("content-type"), costUsd, tx, network };
+}
+
+
+/**
+ * Read an upstream's x402 challenge.
+ *
+ * The OKX A2MCP guide says a v2 challenge is base64 encoded into the PAYMENT-REQUIRED header, and
+ * that is what OKX AI listing review validates. But OKX's own mock merchant, and endpoints built
+ * against other x402 implementations, return the challenge as the 402 response body with no header
+ * at all. Supporting only the header would make most of the existing x402 ecosystem unreadable, so
+ * the header is preferred and the body is the fallback.
+ */
+function readChallenge(p: { http: x402HTTPClient }, res: Response, body: string): any | null {
+  try {
+    const fromHeader = p.http.getPaymentRequiredResponse((h: string) => res.headers.get(h));
+    if (fromHeader && Array.isArray((fromHeader as any).accepts)) return fromHeader;
+  } catch { /* fall through to the body */ }
+
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed && Array.isArray(parsed.accepts) && parsed.accepts.length) return parsed;
+  } catch { /* not JSON */ }
+
+  return null;
 }
