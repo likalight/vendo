@@ -5,8 +5,21 @@ export type Purchase = { buyer: string; service: string; url: string; amount_ato
 const now = () => new Date().toISOString();
 
 export function recordSale(s: Sale) {
-  db.prepare(`INSERT INTO sales (at, business_id, route, amount_atomic, pay_to, upstream_status, receipt, payer, tx_hash)
+  const r = db.prepare(`INSERT INTO sales (at, business_id, route, amount_atomic, pay_to, upstream_status, receipt, payer, tx_hash)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(now(), s.business_id, s.route, s.amount_atomic, s.pay_to, s.upstream_status, s.receipt ?? null, s.payer ?? null, s.tx_hash ?? null);
+  return Number(r.lastInsertRowid);
+}
+
+/**
+ * The x402 middleware writes its settlement header on the way out, after the route handler has
+ * already recorded the sale, so payer and tx_hash are not known at insert time. Backfill them
+ * once the response has finished. Without this, repeat-buyer stats and seller levels never move,
+ * because retention() requires a payer.
+ */
+export function settleSale(id: number, settle: { payer?: string; tx_hash?: string }, receipt?: string | null) {
+  if (!settle.payer && !settle.tx_hash) return;
+  db.prepare(`UPDATE sales SET payer = COALESCE(?, payer), tx_hash = COALESCE(?, tx_hash), receipt = COALESCE(?, receipt) WHERE id = ?`)
+    .run(settle.payer ?? null, settle.tx_hash ?? null, receipt ?? null, id);
 }
 export function recordPurchase(p: Purchase) {
   db.prepare(`INSERT INTO purchases (at, buyer, service, url, amount_atomic, status, settlement)

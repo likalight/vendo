@@ -7,6 +7,7 @@
  *
  * Use a separate, lightly funded test wallet. It refuses to pay more than MAX_USD (default 0.10).
  */
+import "dotenv/config";
 import { privateKeyToAccount } from "viem/accounts";
 import { x402Client, x402HTTPClient } from "@okxweb3/x402-core/client";
 import { registerExactEvmScheme } from "@okxweb3/x402-evm/exact/client";

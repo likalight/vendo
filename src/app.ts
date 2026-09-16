@@ -14,7 +14,7 @@ import { ExactEvmScheme } from "@okxweb3/x402-evm/exact/server";
 import { env } from "./env.js";
 import type { Business } from "./businesses.js";
 import { listBusinesses, getBusiness, saveBusiness, seedIfEmpty, validateBusiness, matchRoute, resolveRoute, publicView, upstreamHeaders, upstreamQuery, updateListing, setStatus, deleteBusiness, updateBusiness } from "./registry.js";
-import { recordSale, listSales, listPurchases, statement, statementCsv, payoutSummary, recordPayout, listPayouts, decodeSettlement, retention } from "./ledger.js";
+import { recordSale, settleSale, listSales, listPurchases, statement, statementCsv, payoutSummary, recordPayout, listPayouts, decodeSettlement, retention } from "./ledger.js";
 import { llmsTxt, openApi, mcpTools } from "./kit.js";
 import { score, findTest, suggestFixes, latestRuns } from "./discovery.js";
 import { match, run, okxTaskPrompt, okxTaskBrief } from "./assist.js";
@@ -401,8 +401,14 @@ app.all(/^\/([a-z0-9-]+)(\/.*)$/, async (req, res) => {
     const receipt = viaCredit ? "credit" : String(res.getHeader("payment-response") ?? req.header("x-vendo-demo-payer") ?? "") || null;
     settle = viaCredit ? {} : decodeSettlement(receipt);
     if (viaCredit && status >= 400) credits.refund(res.locals.creditToken, b.id);
-    recordSale({ business_id: b.id, route: routeLabel, amount_atomic: viaCredit ? "0" : String(Math.round(price * 1e6)),
+    const saleId = recordSale({ business_id: b.id, route: routeLabel, amount_atomic: viaCredit ? "0" : String(Math.round(price * 1e6)),
       pay_to: payToFor(b), upstream_status: status, receipt, payer: settle.payer ?? (OFFLINE ? req.header("x-vendo-demo-payer") ?? null : null), tx_hash: settle.tx_hash ?? null });
+    // The paywall writes payment-response after this handler returns, so read it once the
+    // response is done and backfill the payer and transaction hash.
+    if (!viaCredit) res.on("finish", () => {
+      const late = String(res.getHeader("payment-response") ?? "") || null;
+      try { settleSale(saleId, decodeSettlement(late), late); } catch { /* ledger is best effort */ }
+    });
   };
   const signed = (status: number, body: string) => res.setHeader("x-vendo-receipt", receipts.issue({
     store: b.id, route: routeLabel, method: req.method, url: req.originalUrl, body, status,
