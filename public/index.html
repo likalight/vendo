@@ -1,144 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vendo</title>
 <meta name="description" content="Vendo is the on-ramp to agentic commerce. Turn an API, a website form or your own expertise into a paid service AI agents can find and buy on OKX AI, settled per call in USDT0 on X Layer.">
 <style>
-/* Tokens match public/app.html and public/proof.html so the landing page and the product
-   are one continuous surface. Light first, dark via prefers-color-scheme. */
+/* Visual language aligned with okx.ai so Vendo reads as native to the ecosystem:
+   near-black base, hairline borders, bold sans headings, monospace for every small label,
+   8px radius, and one inverted section. OKX Sans and OKX Sans Mono are proprietary, so this
+   uses the same fallback stacks their own CSS declares. Vendo's wordmark stays its own. */
 :root{
-  --bg:#F3F4F7;--surface:#fff;--surface-2:#E9EBF1;--ink:#0B0E16;--muted:#5C6578;
-  --line:#D6DAE3;--brand:#4B3FD6;--brand-soft:#EEECFD;--paid:#0E8A5B;--warn:#B4412F;
-  --font:"Segoe UI",system-ui,-apple-system,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,"Cascadia Mono","Consolas",monospace;
-  --r:14px;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#07090F;--surface:#0F1422;--surface-2:#161D2F;--ink:#EEF1F7;--muted:#8B95A8;
-  --line:#222B40;--brand:#8C82FF;--brand-soft:#191A3A;--paid:#56E0A4;--warn:#EF8C79;
-}}
-:root[data-theme="dark"]{
-  --bg:#07090F;--surface:#0F1422;--surface-2:#161D2F;--ink:#EEF1F7;--muted:#8B95A8;
-  --line:#222B40;--brand:#8C82FF;--brand-soft:#191A3A;--paid:#56E0A4;--warn:#EF8C79;
+  --bg:#0F0F0F;
+  --panel:#121212;
+  --panel-2:#090909;
+  --ink:#FFFFFF;
+  --muted:rgba(255,255,255,.70);
+  --faint:rgba(255,255,255,.50);
+  --line:rgba(255,255,255,.10);
+  --line-soft:rgba(255,255,255,.06);
+  --accent:#E6A7F1;
+  --accent-line:rgba(240,171,252,.42);
+  --ok:#5BE3A0;
+  --sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  --r:8px;
 }
 
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--font);
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 var(--sans);
   -webkit-font-smoothing:antialiased}
-a{color:var(--brand);text-decoration:none}
-a:hover{text-decoration:underline}
-code,pre{font-family:var(--mono)}
-.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+a{color:var(--ink);text-decoration:none}
+a:hover{color:var(--accent)}
+code,pre,.mono{font-family:var(--mono)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
 
-header{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
-.nav{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
-.logo{font-weight:800;font-size:1.15rem;color:var(--ink);letter-spacing:-.01em}
-.logo span{color:var(--brand)}
-.nav ul{display:flex;align-items:center;gap:22px;list-style:none;margin:0;padding:0}
-.nav ul a{color:var(--muted);font-size:.92rem;font-weight:600;white-space:nowrap}
-.nav ul a:hover{color:var(--ink);text-decoration:none}
-@media(max-width:760px){.nav ul li.opt{display:none}}
+/* nav: mono, no uppercase, hairline base */
+header{position:sticky;top:0;z-index:5;background:rgba(15,15,15,.88);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:20px}
+.logo{font:700 20px var(--sans);letter-spacing:-.01em;color:var(--ink)}
+.logo span{color:var(--accent)}
+.nav ul{display:flex;align-items:center;gap:28px;list-style:none;margin:0;padding:0}
+.nav ul a{font:400 14px var(--mono);color:var(--muted)}
+.nav ul a:hover{color:var(--ink)}
+@media(max-width:760px){.nav ul li.opt{display:none}.nav ul{gap:18px}}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;font:600 .95rem var(--font);
-  border-radius:999px;padding:11px 22px;border:1px solid var(--line);background:var(--surface);
-  color:var(--ink);white-space:nowrap;cursor:pointer;
-  transition:transform .18s cubic-bezier(.16,1,.3,1),border-color .18s,background .18s}
-.btn:hover{text-decoration:none;border-color:var(--brand)}
-.btn:active{transform:translateY(1px)}
-.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-.btn.primary:hover{filter:brightness(1.08)}
-.btn:disabled{opacity:.55;cursor:default}
-@media (prefers-reduced-motion:reduce){.btn{transition:none}.btn:active{transform:none}}
+/* buttons: mono, outline first, 8px */
+.btn{display:inline-flex;align-items:center;justify-content:center;
+  font:400 14px var(--mono);border-radius:var(--r);padding:12px 22px;
+  border:1px solid rgba(255,255,255,.28);background:transparent;color:var(--ink);
+  white-space:nowrap;cursor:pointer;transition:border-color .18s,background .18s,color .18s}
+.btn:hover{border-color:var(--ink);color:var(--ink);background:rgba(255,255,255,.04)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#0F0F0F}
+.btn.primary:hover{background:var(--accent);border-color:var(--accent);color:#0F0F0F}
+.btn:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}}
 
-h1,h2,h3{letter-spacing:-.02em;margin:0}
-h1{font-size:clamp(1.9rem,3.6vw,2.75rem);line-height:1.08;font-weight:800}
-h2{font-size:clamp(1.45rem,2.9vw,2rem);line-height:1.16;font-weight:750}
-h3{font-size:1.02rem;font-weight:700}
-.lede{color:var(--muted);font-size:1.08rem;max-width:38ch}
-.eyebrow{font:700 .74rem var(--font);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--brand);margin:0 0 12px}
-.sub{color:var(--muted);max-width:64ch;margin:10px 0 0}
+h1,h2,h3{margin:0;font-family:var(--sans);font-weight:700;letter-spacing:-.015em}
+h1{font-size:clamp(34px,4.4vw,56px);line-height:1.08}
+h2{font-size:clamp(28px,3.4vw,44px);line-height:1.12}
+h3{font-size:20px;line-height:1.3}
+.lede{color:var(--muted);font-size:17px;line-height:1.55;max-width:40ch}
+.sub{color:var(--muted);font-size:15px;max-width:66ch;margin:12px 0 0}
+.label{font:400 13px var(--mono);color:var(--faint)}
 
-/* ---------- hero with a live demo ---------- */
-.hero{padding:70px 0 58px}
-.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:50px;align-items:center}
-.hero .cta{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+/* ---------- hero ---------- */
+.hero{padding:88px 0 76px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero .cta{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
 
-.demo{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.demo-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 15px;
-  border-bottom:1px solid var(--line);background:var(--surface-2)}
-.demo-bar b{font:700 .74rem var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.demo-bar .price{font:700 .75rem var(--mono);color:var(--ink);background:var(--bg);
-  border:1px solid var(--line);border-radius:999px;padding:2px 10px}
-.demo-body{padding:15px}
-.demo-row{display:flex;gap:8px}
-.demo-row input{flex:1;min-width:0;font:inherit;font-size:.92rem;background:var(--bg);color:var(--ink);
-  border:1px solid var(--line);border-radius:999px;padding:9px 16px}
-.demo-row input:focus{outline:2px solid var(--brand);outline-offset:1px}
-.demo-out{margin-top:13px;font:.78rem/1.62 var(--mono);white-space:pre-wrap;word-break:break-word;
-  background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;
-  max-height:230px;overflow:auto;color:var(--ink)}
-.demo-out .k{color:var(--muted)}
-.demo-out .ok{color:var(--paid);font-weight:700}
-.demo-out .hi{color:var(--brand)}
-.demo-foot{border-top:1px solid var(--line);padding:11px 15px;font-size:.8rem;color:var(--muted)}
+/* live demo panel */
+.demo{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.demo-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px 16px;border-bottom:1px solid var(--line-soft);background:var(--panel-2)}
+.demo-bar b{font:400 13px var(--mono);color:var(--faint);font-weight:400}
+.demo-bar .price{font:400 13px var(--mono);color:var(--accent);
+  border:1px solid var(--accent-line);border-radius:999px;padding:3px 11px}
+.demo-body{padding:16px}
+.demo-row{display:flex;gap:10px}
+.demo-row input{flex:1;min-width:0;font:400 14px var(--mono);background:var(--panel-2);
+  color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:11px 14px}
+.demo-row input::placeholder{color:var(--faint)}
+.demo-row input:focus{outline:none;border-color:var(--accent-line)}
+.demo-out{margin-top:14px;font:400 12.5px/1.75 var(--mono);white-space:pre-wrap;
+  word-break:break-word;background:var(--panel-2);border:1px solid var(--line-soft);
+  border-radius:var(--r);padding:14px;max-height:240px;overflow:auto;color:var(--muted)}
+.demo-out .k{color:var(--faint)}
+.demo-out .ok{color:var(--ok)}
+.demo-out .hi{color:var(--accent)}
+.demo-foot{border-top:1px solid var(--line-soft);padding:13px 16px;
+  font:400 12.5px/1.6 var(--mono);color:var(--faint)}
 
-/* ---------- the gap: full width statement ---------- */
-.gap-sec{padding:56px 0;border-top:1px solid var(--line);background:var(--surface)}
-.gap-sec .big{font-size:clamp(1.3rem,2.6vw,1.85rem);font-weight:700;letter-spacing:-.02em;
-  max-width:24ch;line-height:1.25}
-.gap-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start}
+/* ---------- inverted statement section, their signature move ---------- */
+.gap-sec{background:#B2B2B2;color:#0F0F0F;padding:76px 0}
+.gap-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.gap-sec .big{font:700 clamp(24px,3vw,38px)/1.2 var(--sans);letter-spacing:-.015em;
+  max-width:22ch;margin:0}
+.gap-sec p{color:rgba(15,15,15,.72);font-size:15px;max-width:60ch;margin:0 0 14px}
+.gap-sec p:last-child{margin-bottom:0}
 
 /* ---------- four pillars ---------- */
-.pillars{padding:56px 0;border-top:1px solid var(--line)}
-.p-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:28px}
-.p{border:1px solid var(--line);border-radius:var(--r);padding:22px;background:var(--surface)}
-.p:first-child{background:linear-gradient(135deg,var(--brand-soft),var(--surface) 72%)}
-.p h3{margin-bottom:7px}
-.p p{color:var(--muted);font-size:.92rem;margin:0}
-.p ul{margin:11px 0 0;padding:0;list-style:none}
-.p li{font-size:.86rem;color:var(--muted);padding:5px 0;border-top:1px solid var(--line)}
-.p li b{color:var(--ink);font-weight:600}
+.pillars{padding:84px 0;border-bottom:1px solid var(--line-soft)}
+.p-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;margin-top:40px;
+  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:var(--r);
+  overflow:hidden}
+.p{background:var(--bg);padding:30px}
+.p:first-child{background:var(--panel)}
+.p h3{margin-bottom:10px}
+.p>p{color:var(--muted);font-size:15px;margin:0}
+.p ul{margin:18px 0 0;padding:0;list-style:none}
+.p li{font:400 13px/1.6 var(--mono);color:var(--faint);padding:9px 0;
+  border-top:1px solid var(--line-soft)}
+.p li b{color:var(--ink);font-weight:400}
 
-/* ---------- who it's for: three rows, not cards ---------- */
-.who{padding:56px 0;border-top:1px solid var(--line)}
-.who-row{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;
-  padding:20px 0;border-bottom:1px solid var(--line)}
+/* ---------- three ways in ---------- */
+.who{padding:84px 0;border-bottom:1px solid var(--line-soft)}
+.who-row{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;
+  padding:26px 0;border-bottom:1px solid var(--line-soft)}
 .who-row:last-child{border-bottom:0}
-.who-row .what{font-weight:700;font-size:1rem;min-width:190px}
-.who-row p{margin:3px 0 0;color:var(--muted);font-size:.9rem}
-.who-row .tag{font:600 .76rem var(--mono);color:var(--muted);background:var(--surface-2);
-  border-radius:999px;padding:4px 12px;white-space:nowrap}
+.who-row h3{font-size:18px;margin-bottom:5px}
+.who-row p{margin:0;color:var(--muted);font-size:14.5px;max-width:62ch}
+.who-row .tag{font:400 12.5px var(--mono);color:var(--faint);
+  border:1px solid var(--line);border-radius:999px;padding:5px 13px;white-space:nowrap}
+.who-row .tag.live{color:var(--accent);border-color:var(--accent-line)}
 
 /* ---------- close ---------- */
-.close{padding:56px 0;border-top:1px solid var(--line)}
-.close-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-  padding:38px;display:grid;grid-template-columns:1.2fr .8fr;gap:34px;align-items:center}
-.stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.chip{font:600 .8rem var(--font);color:var(--muted);background:var(--bg);
-  border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+.close{padding:84px 0}
+.close-card{border:1px solid var(--line);border-radius:var(--r);padding:44px;
+  background:var(--panel);display:grid;grid-template-columns:1.25fr .75fr;gap:40px;
+  align-items:center}
+.stack{display:flex;flex-wrap:wrap;gap:9px;margin-top:22px}
+.chip{font:400 12.5px var(--mono);color:var(--muted);border:1px solid var(--line);
+  border-radius:999px;padding:6px 14px}
 
-footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:.88rem}
-.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.foot a{color:var(--muted)}
-.note{margin-top:14px;font-size:.82rem;max-width:76ch}
+footer{border-top:1px solid var(--line-soft);padding:34px 0 52px;color:var(--faint)}
+.foot{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  font:400 13px var(--mono)}
+.foot a{color:var(--faint)}
+.foot a:hover{color:var(--ink)}
+.note{margin-top:18px;font-size:12.5px;line-height:1.7;max-width:78ch;color:rgba(255,255,255,.38)}
 
 @media(max-width:900px){
-  .hero{padding:44px 0}
-  .hero h1{font-size:clamp(1.65rem,4vw,2.05rem)}
-  .hero .lede{font-size:1rem;max-width:48ch}
-  .hero .cta{margin-top:20px}
-  .hero-grid,.gap-grid,.close-card{grid-template-columns:1fr;gap:30px}
+  .hero{padding:56px 0}
+  .hero-grid,.gap-grid,.close-card{grid-template-columns:1fr;gap:36px}
   .p-grid{grid-template-columns:1fr}
-  .who-row{grid-template-columns:1fr;gap:6px}
-  .who-row .what{min-width:0}
+  .who-row{grid-template-columns:1fr;gap:10px}
   .who-row .tag{justify-self:start}
+  .gap-sec{padding:56px 0}
+  .pillars,.who,.close{padding:56px 0}
 }
 @media(max-width:560px){
-  .close-card{padding:24px}
+  .wrap{padding:0 18px}
+  .close-card{padding:26px}
+  .p{padding:24px}
   .lede,.gap-sec .big{max-width:none}
 }
 </style>
@@ -175,7 +191,7 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);f
       <!-- Live call against this deployment's own paywall. Not a mockup. -->
       <div class="demo">
         <div class="demo-bar">
-          <b>Try a real paid service</b>
+          <b>try a real paid service</b>
           <span class="price">0.01 USDT0</span>
         </div>
         <div class="demo-body">
@@ -187,23 +203,22 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);f
           <div class="demo-out" id="out">Screens a company against the US OFAC sanctions list.
 Press Call it to hit the live endpoint.</div>
         </div>
-        <div class="demo-foot">This runs against the real service. Unpaid calls answer with an
-          x402 payment request, which is exactly what an agent's wallet reads before it pays.</div>
+        <div class="demo-foot">Runs against the real service. An unpaid call answers with an x402
+          payment request, which is exactly what an agent wallet reads before it pays.</div>
       </div>
     </div>
   </section>
 
-  <!-- THE GAP -->
+  <!-- INVERTED STATEMENT -->
   <section class="gap-sec">
     <div class="wrap gap-grid">
-      <p class="big">The agent economy has buyers. What it is short of is sellers.</p>
+      <h2 class="big">The agent economy has buyers. What it is short of is sellers.</h2>
       <div>
-        <p class="sub" style="margin:0">OKX AI already has agents with wallets, ready to pay per
-          call. Almost every business that owns something worth buying is not on it, because
-          becoming a seller means writing payment code, deploying a server and understanding a
-          payment protocol.</p>
-        <p class="sub">Vendo is the on-ramp. You bring the thing you already have. Vendo does the
-          rest, and the business that joins as a seller can start buying from other agents too.</p>
+        <p>OKX AI already has agents with wallets, ready to pay per call. Almost every business
+          that owns something worth buying is not on it, because becoming a seller means writing
+          payment code, deploying a server and understanding a payment protocol.</p>
+        <p>Vendo is the on-ramp. You bring the thing you already have. Vendo does the rest, and
+          the business that joins as a seller can start buying from other agents too.</p>
       </div>
     </div>
   </section>
@@ -211,15 +226,15 @@ Press Call it to hit the live endpoint.</div>
   <!-- FOUR PILLARS -->
   <section class="pillars">
     <div class="wrap">
-      <p class="eyebrow">Discovery, services, collaboration, monetisation</p>
-      <h2>How Vendo answers each one</h2>
+      <p class="label">discovery, services, collaboration, monetisation</p>
+      <h2 style="margin-top:14px">How Vendo answers each one</h2>
       <div class="p-grid">
 
         <div class="p">
           <h3>Services</h3>
           <p>Whatever you have becomes something an agent can call.</p>
           <ul>
-            <li><b>Have an API.</b> Import an OpenAPI file or add routes by hand.</li>
+            <li><b>Have an API.</b> Import an OpenAPI file, or add routes by hand.</li>
             <li><b>Have only a website.</b> Point Vendo at a form, prove you own the domain.</li>
             <li><b>Credentials stay yours.</b> Encrypted at rest, never returned.</li>
           </ul>
@@ -229,7 +244,7 @@ Press Call it to hit the live endpoint.</div>
           <h3>Monetisation</h3>
           <p>Paid per call, settled on X Layer, straight to your wallet.</p>
           <ul>
-            <li><b>Per call in USDT0.</b> Set a price per route, or up to three tiers.</li>
+            <li><b>Per call in USDT0.</b> A price per route, or up to three tiers.</li>
             <li><b>Prepaid packs.</b> Sell 25 or 100 calls at a discount.</li>
             <li><b>Vendo never holds it.</b> Buyers pay your address directly.</li>
           </ul>
@@ -239,7 +254,7 @@ Press Call it to hit the live endpoint.</div>
           <h3>Discovery</h3>
           <p>Found by agents automatically, and by people from any page.</p>
           <ul>
-            <li><b>Agent readable.</b> MCP server, OpenAPI and <code>llms.txt</code> per store.</li>
+            <li><b>Agent readable.</b> MCP server, OpenAPI and llms.txt per store.</li>
             <li><b>Browser extension.</b> Select text anywhere, get a service that fits.</li>
             <li><b>Public feed.</b> Uptime, prices and seller level, open to anyone.</li>
           </ul>
@@ -249,8 +264,8 @@ Press Call it to hit the live endpoint.</div>
           <h3>Collaboration</h3>
           <p>When one call is not enough, Vendo hands the job to OKX AI.</p>
           <ul>
-            <li><b>No competing.</b> Custom work belongs in OKX AI's own task market.</li>
-            <li><b>A full brief, not a hint.</b> Title, description, budget, deadline, matching.</li>
+            <li><b>No competing.</b> Custom work belongs in OKX AI's task market.</li>
+            <li><b>A full brief.</b> Title, description, budget, deadline, matching.</li>
             <li><b>Your agent posts it.</b> Negotiation and escrow stay with OKX.</li>
           </ul>
         </div>
@@ -259,27 +274,33 @@ Press Call it to hit the live endpoint.</div>
     </div>
   </section>
 
-  <!-- WHO -->
+  <!-- THREE WAYS IN -->
   <section class="who">
     <div class="wrap">
       <h2>Three ways in</h2>
       <p class="sub">The route depends on what you already have, not on how technical you are.</p>
-      <div style="margin-top:22px">
+      <div style="margin-top:30px">
         <div class="who-row">
-          <div><div class="what">A business with an API</div>
-            <p>Import your OpenAPI file, set a price per route, keep your key encrypted.</p></div>
-          <div></div><span class="tag">live today</span>
+          <div>
+            <h3>A business with an API</h3>
+            <p>Import your OpenAPI file, set a price per route, keep your key encrypted.</p>
+          </div>
+          <span class="tag live">live today</span>
         </div>
         <div class="who-row">
-          <div><div class="what">A business with only a website</div>
-            <p>Point Vendo at a quote or booking form. Domain ownership is proven first.</p></div>
-          <div></div><span class="tag">live today</span>
+          <div>
+            <h3>A business with only a website</h3>
+            <p>Point Vendo at a quote or booking form. Domain ownership is proven first.</p>
+          </div>
+          <span class="tag live">live today</span>
         </div>
         <div class="who-row">
-          <div><div class="what">A person selling expertise</div>
-            <p>Custom work is negotiated and escrowed, so Vendo writes the brief and OKX AI's
-              task market handles the job.</p></div>
-          <div></div><span class="tag">via OKX AI tasks</span>
+          <div>
+            <h3>A person selling expertise</h3>
+            <p>Custom work is negotiated and escrowed, so Vendo writes the brief and OKX AI's task
+              market handles the job.</p>
+          </div>
+          <span class="tag">via OKX AI tasks</span>
         </div>
       </div>
     </div>
@@ -291,8 +312,8 @@ Press Call it to hit the live endpoint.</div>
       <div class="close-card">
         <div>
           <h2>Running on X Layer today</h2>
-          <p class="lede" style="max-width:46ch">Payments settle in USDT0 through the OKX Payment
-            SDK. Services list on OKX AI as A2MCP endpoints.</p>
+          <p class="lede" style="max-width:48ch;margin-top:14px">Payments settle in USDT0 through
+            the OKX Payment SDK. Services list on OKX AI as A2MCP endpoints.</p>
           <div class="stack">
             <span class="chip">OKX AI</span>
             <span class="chip">Payment SDK (x402)</span>
@@ -301,7 +322,7 @@ Press Call it to hit the live endpoint.</div>
             <span class="chip">X Layer</span>
           </div>
         </div>
-        <div class="cta" style="margin:0;display:flex;gap:10px;flex-wrap:wrap">
+        <div class="cta" style="display:flex;gap:12px;flex-wrap:wrap">
           <a class="btn primary" href="/app">Open dashboard</a>
           <a class="btn" href="/proof">See live proof</a>
         </div>
@@ -316,14 +337,15 @@ Press Call it to hit the live endpoint.</div>
     <div class="foot">
       <span>Vendo, by Xtension Labs.</span>
       <span>
-        <a href="/how">How it works</a> &nbsp; <a href="/proof">Proof</a> &nbsp;
-        <a href="/llms.txt">For agents</a> &nbsp;
+        <a href="/how">How it works</a> &nbsp;&nbsp; <a href="/proof">Proof</a> &nbsp;&nbsp;
+        <a href="/llms.txt">For agents</a> &nbsp;&nbsp;
         <a href="https://github.com/likalight/vendo">GitHub</a>
       </span>
     </div>
-    <p class="note">Only list APIs and websites you own or have permission to sell. Website forms
-      require domain ownership verification. Screening output is a risk signal to support a payment
-      decision, not legal or compliance advice.</p>
+    <p class="note">Vendo is an independent project and is not affiliated with or endorsed by OKX.
+      Only list APIs and websites you own or have permission to sell. Website forms require domain
+      ownership verification. Screening output is a risk signal to support a payment decision, not
+      legal or compliance advice.</p>
   </div>
 </footer>
 
