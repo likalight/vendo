@@ -317,3 +317,27 @@ test("import: reselling a paid upstream requires a stated permission basis", asy
   });
   assert.equal(thin.status, 400);
 });
+
+test("treasury: a vault must be verified before revenue is pointed at it", async () => {
+  // Revenue only reaches a vault when a store's payTo is the vault address, so the check has to
+  // answer both "is this really a vault" and "is anything actually feeding it".
+  const adminHdr = { "x-vendo-admin": ADMIN };
+  const r = await get("/vendo/api/treasury/verify?address=0x1111111111111111111111111111111111111111", adminHdr);
+  assert.equal(r.status, 200);
+  const body = await r.json();
+  assert.equal(body.address, "0x1111111111111111111111111111111111111111");
+  assert.equal(typeof body.isVault, "boolean");
+  assert.equal(typeof body.revenueReaching, "boolean");
+  assert.ok(Array.isArray(body.feedableBy));
+  assert.match(body.howToConnect, /payTo|store/i);
+
+  // A string that is not an address is rejected before any network call.
+  const bad = await get("/vendo/api/treasury/verify?address=not-an-address", adminHdr);
+  assert.equal((await bad.json()).isVault, false);
+
+  // No address at all is a caller error.
+  assert.equal((await get("/vendo/api/treasury/verify", adminHdr)).status, 400);
+
+  // It is an admin route: an unauthenticated caller must not learn the vault layout.
+  assert.equal((await get("/vendo/api/treasury/verify?address=0x1111111111111111111111111111111111111111")).status, 401);
+});

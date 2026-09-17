@@ -15,6 +15,8 @@ const abi = parseAbi([
   "function spentToday() view returns (uint256)",
   "function paused() view returns (bool)",
   "function owner() view returns (address)",
+  "function token() view returns (address)",
+  "function totalAssets() view returns (uint256)",
   "function operator() view returns (address)",
   "function sweep(address venue, uint256 amount)",
   "function recall(address venue, uint256 amount)",
@@ -88,3 +90,63 @@ export async function pause() {
 
 /** Simulated incoming revenue so the offline demo shows money arriving. */
 export function simulateRevenue(usd: number) { if (OFFLINE) sim.idle += units(usd); }
+
+
+export type VaultCheck = {
+  address: string;
+  isVault: boolean;
+  reason?: string;
+  owner?: string;
+  operator?: string;
+  token?: string;
+  expectedToken?: string;
+  idle?: number;
+  invested?: number;
+  paused?: boolean;
+  feedableBy?: string[];
+};
+
+/**
+ * Confirm an address is a VendoVault on this network before revenue is pointed at it.
+ *
+ * The vault has no deposit function on purpose: idle() is simply its own token balance, so money
+ * arrives by ordinary ERC-20 transfer. x402 already pays a route's payTo directly, which means
+ * setting payTo to a vault address turns every paid call into a deposit. That is the whole link
+ * between earning and investing, and it is also why it must be checked: a payTo pointed at the
+ * wrong contract sends revenue somewhere it cannot be recovered from.
+ *
+ * Checks the contract answers the vault interface and settles in the same token this network pays
+ * in. A vault holding a different asset would silently receive nothing.
+ */
+export async function verifyVault(address: string): Promise<VaultCheck> {
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return { address, isVault: false, reason: "Not a wallet address" };
+  if (OFFLINE) {
+    return { address, isVault: true, reason: "Offline demo: not checked onchain", owner: "0xOwner", operator: "0xOperator",
+      token: env.network.usdt0, expectedToken: env.network.usdt0, idle: sim.idle, invested: sim.invested, paused: sim.paused };
+  }
+  const pc = createPublicClient({ chain, transport: http() });
+  const read = (fn: any) => pc.readContract({ address: address as Address, abi, functionName: fn }) as Promise<any>;
+  try {
+    const [owner, operator, token, idle, invested, paused] = await Promise.all(
+      ["owner", "operator", "token", "idle", "invested", "paused"].map(read));
+    const expected = env.network.usdt0;
+    const tokenOk = String(token).toLowerCase() === expected.toLowerCase();
+    return {
+      address, isVault: tokenOk,
+      reason: tokenOk ? undefined : `This vault settles in ${token}, but this network pays in ${expected}. Revenue sent here would not be recoverable by the vault.`,
+      owner: String(owner), operator: String(operator), token: String(token), expectedToken: expected,
+      idle: Number(idle), invested: Number(invested), paused: Boolean(paused),
+    };
+  } catch (e: any) {
+    return { address, isVault: false, reason: `Address does not answer the vault interface: ${String(e.shortMessage ?? e.message)}` };
+  }
+}
+
+/**
+ * Which listed stores actually pay into a given vault. Revenue only reaches it when a store's
+ * payTo is the vault address, so this answers "is anything feeding it" rather than assuming.
+ */
+export function storesFeeding(vault: string, stores: { id: string; payTo?: string }[], fallbackPayTo: string) {
+  const v = vault.toLowerCase();
+  return stores.filter((s) => (s.payTo || fallbackPayTo).toLowerCase() === v).map((s) => s.id);
+}

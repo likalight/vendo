@@ -295,6 +295,23 @@ app.post("/vendo/api/web/publish", async (q, s) => {
 app.get("/vendo/api/treasury", async (_q, s) => { try { s.json(await treasury.state()); } catch (e: any) { s.status(500).json({ errors: [e.message] }); } });
 app.post("/vendo/api/treasury/sweep", async (q, s) => { try { s.json(await treasury.sweep(String(q.body?.venue), Number(q.body?.amountUsd))); } catch (e: any) { s.status(400).json({ errors: [e.shortMessage ?? e.message] }); } });
 app.post("/vendo/api/treasury/pay", async (q, s) => { try { s.json(await treasury.payBill(String(q.body?.payee), Number(q.body?.amountUsd), String(q.body?.ref ?? "bill"))); } catch (e: any) { s.status(400).json({ errors: [e.shortMessage ?? e.message] }); } });
+// Before a seller points revenue at a vault, confirm the address really is one and settles in the
+// asset this network pays in. A payTo aimed at the wrong contract loses the money.
+app.get("/vendo/api/treasury/verify", async (q, s) => {
+  const address = String(q.query.address ?? process.env.VAULT_ADDRESS ?? "");
+  if (!address) return s.status(400).json({ errors: ["address query parameter is required (or set VAULT_ADDRESS)"] });
+  const check = await treasury.verifyVault(address);
+  const feeding = treasury.storesFeeding(address, listBusinesses(), env.defaultPayTo);
+  s.json({
+    ...check,
+    feedableBy: feeding,
+    revenueReaching: feeding.length > 0,
+    howToConnect: feeding.length
+      ? `${feeding.length} store(s) already pay into this vault.`
+      : "No listed store pays into this vault yet. Set a store's payTo to this address and every paid call becomes a deposit.",
+  });
+});
+
 app.post("/vendo/api/treasury/pause", async (_q, s) => { try { s.json(await treasury.pause()); } catch (e: any) { s.status(400).json({ errors: [e.shortMessage ?? e.message] }); } });
 
 // ---------- Free: public reputation feed and receipts ----------
