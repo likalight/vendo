@@ -8,6 +8,7 @@
 import "urlpattern-polyfill";
 import express from "express";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { paymentMiddleware, x402ResourceServer } from "@okxweb3/x402-express";
 import { OKXFacilitatorClient } from "@okxweb3/x402-core";
 import { ExactEvmScheme } from "@okxweb3/x402-evm/exact/server";
@@ -115,6 +116,9 @@ app.use("/vendo/assist/run", rateLimit(30), requireAssist);
 app.use("/mcp", rateLimit(120));
 
 // ---------- Free: pages, kit, health ----------
+// Landing page imagery. Fingerprint-free names, so a short cache is the honest setting.
+app.use("/img", express.static(fileURLToPath(new URL("../public/img", import.meta.url)), { maxAge: "1h" }));
+
 app.get("/", (_q, s) => s.type("html").send(page("index.html")));
 app.get("/app", (_q, s) => s.type("html").send(page("app.html")));
 app.get("/proof", (_q, s) => s.type("html").send(page("proof.html")));

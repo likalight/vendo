@@ -24,6 +24,9 @@ header{display:flex;justify-content:space-between;align-items:center;padding:0 2
 .badge{font:400 12px var(--mono);border:1px solid var(--line);border-radius:999px;
   padding:4px 11px;color:var(--faint);margin-left:10px}
 .badge.warn{color:var(--warn);border-color:rgba(255,138,122,.42)}
+/* #unlock is a button, so it must not inherit the button fill and lose its label. */
+button.badge{background:transparent;cursor:pointer}
+button.badge:hover{color:var(--ink);border-color:var(--ink)}
 nav{display:flex;gap:4px;padding:12px 24px;overflow-x:auto;border-bottom:1px solid var(--line-soft)}
 nav button{font:400 13.5px var(--mono);background:none;border:1px solid transparent;color:var(--faint);
   padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
@@ -68,7 +71,7 @@ pre{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:
 </style>
 </head>
 <body>
-<header><div><span class="logo">vendo<b>.</b></span><span class="badge" id="net"></span><span class="badge" id="mode"></span></div><span><a href="/how" target="_blank" class="muted">How it works</a> &nbsp; <a href="/proof" target="_blank" class="muted">Proof page</a></span></header>
+<header><div><span class="logo">vendo<b>.</b></span><span class="badge" id="net"></span><span class="badge" id="mode"></span><button class="badge" id="unlock" hidden>owner view locked</button></div><span><a href="/how" target="_blank" class="muted">How it works</a> &nbsp; <a href="/proof" target="_blank" class="muted">Proof page</a></span></header>
 <nav id="tabs"><button data-t="overview" class="on">Overview</button><button data-t="wizard">Create a service</button><button data-t="onboard">Advanced form</button><button data-t="website">No API? Use your website</button><button data-t="discovery">Get found</button><button data-t="treasury">Treasury</button><button data-t="books">Books</button><button data-t="assist">Assist</button><button data-t="insights">Insights</button><button data-t="kit">Agent kit</button></nav>
 <main>
 <section id="overview">
@@ -286,11 +289,14 @@ pre{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:
 <script>
 const $=s=>document.querySelector(s);
 const adminH=()=>{const t=sessionStorage.getItem('vendoAdmin');return t?{'x-vendo-admin':t}:{};};
+let LOCKED=false;
 async function api(p,o={}){
   const r=await fetch(p,{...o,headers:{...(o.headers||{}),...adminH()}});
-  if(r.status===401){const t=prompt('Admin token for this Vendo server');if(t){sessionStorage.setItem('vendoAdmin',t);return api(p,o);}}
+  if(r.status===401){LOCKED=true;sessionStorage.removeItem('vendoAdmin');$('#unlock').hidden=false;return {__locked:true};}
   return r.json();
 }
+const rows=v=>Array.isArray(v)?v:[];
+$('#unlock').onclick=()=>{const t=prompt('Admin token for this Vendo server');if(!t)return;sessionStorage.setItem('vendoAdmin',t);LOCKED=false;$('#unlock').hidden=true;load();};
 const post=(p,b)=>api(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)});
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let CFG={},BIZ=[];
@@ -298,19 +304,20 @@ document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.que
 $('#smonth').value=new Date().toISOString().slice(0,7);
 
 async function load(){
-  CFG=await api('/vendo/api/config'); BIZ=await api('/vendo/api/businesses');
+  CFG=await api('/vendo/api/config'); BIZ=rows(await api('/vendo/api/businesses'));
   $('#net').textContent=`X Layer ${CFG.network} · ${CFG.chainId}`;
   $('#mode').textContent=CFG.offline?'offline demo (no real payments)':'live payments'; $('#mode').classList.toggle('warn',CFG.offline);
-  const sales=await api('/vendo/api/sales'), purch=await api('/vendo/api/purchases'), st=await api('/vendo/api/statement');
+  const sales=rows(await api('/vendo/api/sales')), purch=rows(await api('/vendo/api/purchases')), st=await api('/vendo/api/statement');
+  const tot=st&&st.totals;
   $('#k-stores').textContent=BIZ.length; $('#k-calls').textContent=sales.filter(s=>s.upstream_status<400).length;
-  $('#k-rev').textContent=st.totals.revenueUsdt0.toFixed(3); $('#k-spend').textContent=st.totals.costsUsdt0.toFixed(3);
+  $('#k-rev').textContent=tot?tot.revenueUsdt0.toFixed(3):'locked'; $('#k-spend').textContent=tot?tot.costsUsdt0.toFixed(3):'locked';
   $('#svc').innerHTML=BIZ.flatMap(b=>b.routes.map(r=>{const url=`${CFG.publicUrl}/${b.id}${r.sampleRequest}`;return `<tr><td>${esc(b.title)}${b.local?' <span class="pill">Vendo</span>':''}</td><td><code>${esc(r.method)} ${esc(url)}</code></td><td>${r.priceUsd}${(r.tiers||[]).length?`<br><span class="muted">${r.tiers.map(x=>esc(x.name)+' '+x.priceUsd).join(' · ')}</span>`:''}</td><td>${b.score}<br><span class="pill">${esc(b.sellerLevel?.label||'New seller')}</span></td><td><span class="pill">${esc((b.listing?.status||'not_registered').replace('_',' '))}</span> <span class="muted">${b.listingModel==='managed'?'managed':'self'}</span><br><button class="btn golive" style="margin:4px 0 0" data-id="${esc(b.id)}">Go live</button> <button class="btn tst" style="margin:4px 0 0" data-id="${esc(b.id)}">Test</button> <button class="btn pz" style="margin:4px 0 0" data-id="${esc(b.id)}" data-s="${b.status==='paused'?'active':'paused'}">${b.status==='paused'?'Resume':'Pause'}</button>${b.status==='paused'?' <span class="err">paused</span>':''}</td><td><button class="btn chk" style="margin:0" data-u="${esc(url)}">Check</button></td></tr>`})).join('');
   document.querySelectorAll('#svc .golive').forEach(b=>b.onclick=()=>goLive(b.dataset.id));
   document.querySelectorAll('#svc .pz').forEach(b=>b.onclick=async()=>{await post(`/vendo/api/businesses/${b.dataset.id}/status`,{status:b.dataset.s});load();});
   document.querySelectorAll('#svc .tst').forEach(b=>b.onclick=async()=>{b.textContent='Testing…';const r=await post(`/vendo/api/businesses/${b.dataset.id}/test`,{});b.outerHTML=r.pass?'<span class="ok">Test passed</span>':`<span class="err" title="${esc(JSON.stringify(r))}">Test failed</span>`;});
   document.querySelectorAll('#svc .chk').forEach(btn=>btn.onclick=async()=>{const r=await post('/vendo/api/check402',{url:btn.dataset.u});btn.outerHTML=r.status===402?`<span class="ok">402${r.paymentRequiredHeader?' + header':''}</span>`:`<span class="err">${r.status}</span>`;});
-  $('#sales').innerHTML=sales.slice(0,20).map(s=>`<tr><td>${esc(s.at.slice(0,19).replace('T',' '))}</td><td>${esc(s.business_id)}</td><td><code>${esc(s.route)}</code></td><td>${(s.amount_atomic/1e6).toFixed(3)}</td><td>${s.upstream_status}</td><td><code>${esc((s.receipt||'').slice(0,40))}</code></td></tr>`).join('')||'<tr><td colspan="6" class="muted">No sales yet. Run a paid call or try Assist.</td></tr>';
-  $('#purch').innerHTML=purch.slice(0,20).map(p=>`<tr><td>${esc(p.at.slice(0,19).replace('T',' '))}</td><td><code>${esc(p.service)}</code></td><td>${(p.amount_atomic/1e6).toFixed(3)}</td><td>${p.status}</td><td><code>${esc((p.settlement||'').slice(0,40))}</code></td></tr>`).join('')||'<tr><td colspan="5" class="muted">No purchases yet.</td></tr>';
+  $('#sales').innerHTML=sales.slice(0,20).map(s=>`<tr><td>${esc(s.at.slice(0,19).replace('T',' '))}</td><td>${esc(s.business_id)}</td><td><code>${esc(s.route)}</code></td><td>${(s.amount_atomic/1e6).toFixed(3)}</td><td>${s.upstream_status}</td><td><code>${esc((s.receipt||'').slice(0,40))}</code></td></tr>`).join('')||'<tr><td colspan="6" class="muted">'+(LOCKED?'Sales are owner only. Unlock to see them.':'No sales yet. Run a paid call or try Assist.')+'</td></tr>';
+  $('#purch').innerHTML=purch.slice(0,20).map(p=>`<tr><td>${esc(p.at.slice(0,19).replace('T',' '))}</td><td><code>${esc(p.service)}</code></td><td>${(p.amount_atomic/1e6).toFixed(3)}</td><td>${p.status}</td><td><code>${esc((p.settlement||'').slice(0,40))}</code></td></tr>`).join('')||'<tr><td colspan="5" class="muted">'+(LOCKED?'Purchases are owner only. Unlock to see them.':'No purchases yet.')+'</td></tr>';
   const opts=BIZ.map(b=>`<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('');
   $('#dbiz').innerHTML=BIZ.filter(b=>!b.local).map(b=>`<option value="${esc(b.id)}">${esc(b.title)}</option>`).join(''); $('#sbiz').innerHTML='<option value="">All stores</option>'+opts;
   $('#kitList').innerHTML=`<p><a href="/llms.txt" target="_blank">/llms.txt</a> (all services)</p>`+BIZ.map(b=>`<p><b>${esc(b.title)}</b> · <a target="_blank" href="/vendo/kit/${b.id}/openapi.json">OpenAPI</a> · <a target="_blank" href="/vendo/kit/${b.id}/mcp.json">MCP tools</a></p>`).join('');
