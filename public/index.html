@@ -101,6 +101,13 @@ h3{font-size:20px;line-height:1.3}
 .gap-sec p{color:rgba(15,15,15,.72);font-size:15px;max-width:60ch;margin:0 0 14px}
 .gap-sec p:last-child{margin-bottom:0}
 
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.ba>div{background:rgba(15,15,15,.06);border:1px solid rgba(15,15,15,.12);border-radius:var(--r);
+  padding:16px 18px;font-size:14px;color:rgba(15,15,15,.78)}
+.ba b{display:block;font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;
+  color:#0F0F0F;margin-bottom:7px}
+@media(max-width:560px){.ba{grid-template-columns:1fr}}
+
 /* ---------- four pillars ---------- */
 .pillars{padding:84px 0;border-bottom:1px solid var(--line-soft)}
 .p-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;margin-top:40px;
@@ -179,9 +186,9 @@ footer{border-top:1px solid var(--line-soft);padding:34px 0 52px;color:var(--fai
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <h1>Put your business on the agent economy.</h1>
-        <p class="lede">Agents are ready to buy. Vendo turns what you already have into something
-          they can find and pay for.</p>
+        <h1>Take payments from AI agents.</h1>
+        <p class="lede">Stripe let any website take card payments. Vendo does the same for
+          AI agents.</p>
         <div class="cta">
           <a class="btn primary" href="/app">Open dashboard</a>
           <a class="btn" href="/proof">See live proof</a>
@@ -191,17 +198,17 @@ footer{border-top:1px solid var(--line-soft);padding:34px 0 52px;color:var(--fai
       <!-- Live call against this deployment's own paywall. Not a mockup. -->
       <div class="demo">
         <div class="demo-bar">
-          <b>try a real paid service</b>
-          <span class="price">0.01 USDT0</span>
+          <b>ask a real paid service</b>
+          <span class="price">0.05 USDT0</span>
         </div>
         <div class="demo-body">
           <form class="demo-row" id="f">
-            <input id="q" value="Example Trading LLC" aria-label="Company name to screen"
-                   maxlength="80" autocomplete="off">
-            <button class="btn primary" id="go" type="submit">Call it</button>
+            <input id="q" value="is Example Trading LLC sanctioned" aria-label="Ask a question"
+                   maxlength="120" autocomplete="off">
+            <button class="btn primary" id="go" type="submit">Ask</button>
           </form>
-          <div class="demo-out" id="out">Screens a company against the US OFAC sanctions list.
-Press Call it to hit the live endpoint.</div>
+          <div class="demo-out" id="out">Ask anything. Vendo picks the service that can answer,
+fills in the details, and pays it. Press Ask to hit the live endpoint.</div>
         </div>
         <div class="demo-foot">Runs against the real service. An unpaid call answers with an x402
           payment request, which is exactly what an agent wallet reads before it pays.</div>
@@ -219,6 +226,12 @@ Press Call it to hit the live endpoint.</div>
           payment code, deploying a server and understanding a payment protocol.</p>
         <p>Vendo is the on-ramp. You bring the thing you already have. Vendo does the rest, and
           the business that joins as a seller can start buying from other agents too.</p>
+        <div class="ba">
+          <div><b>Before</b>Write payment protocol code, deploy a server, manage a crypto wallet,
+            get listed. Almost no real business will do that.</div>
+          <div><b>After</b>Paste your API or point at a form on your site, set a price per call.
+            You are live.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -254,6 +267,7 @@ Press Call it to hit the live endpoint.</div>
           <h3>Discovery</h3>
           <p>Found by agents automatically, and by people from any page.</p>
           <ul>
+            <li><b>Ask in English.</b> One question, one price, one answer. Vendo picks the service.</li>
             <li><b>Agent readable.</b> MCP server, OpenAPI and llms.txt per store.</li>
             <li><b>Browser extension.</b> Select text anywhere, get a service that fits.</li>
             <li><b>Public feed.</b> Uptime, prices and seller level, open to anyone.</li>
@@ -361,9 +375,9 @@ Press Call it to hit the live endpoint.</div>
     var name = q.value.trim();
     if (!name) return;
     go.disabled = true;
-    out.textContent = "Calling /counterparty/sanctions ...";
+    out.textContent = "Asking ...";
 
-    fetch("/counterparty/sanctions?name=" + encodeURIComponent(name))
+    fetch("/ask/q?q=" + encodeURIComponent(name))
       .then(function (r) {
         // An unpaid call answers 402. Live mode carries the base64 x402 challenge in the
         // PAYMENT-REQUIRED header; offline demo mode puts the same facts in the body.
