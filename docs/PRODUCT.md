@@ -9,7 +9,7 @@ where a business does all four without leaving OKX AI.
 |---|---|---|
 | **Sell** | Your API, your website form, or your expertise becomes a service agents can buy | Built, listed |
 | **Earn** | Paid per call in USDT0 on X Layer, straight to your wallet, with signed receipts and books | Built, proven onchain |
-| **Invest** | Revenue that is sitting idle goes to work on X Layer instead of waiting in a wallet | Contract built, no venue adapter |
+| **Invest** | Revenue that is sitting idle goes to work on X Layer instead of waiting in a wallet | Contract built, not deployed, no adapter, unaudited |
 | **Hire** | Your agent buys from other agents, inside OKX AI | Partly built, partly blocked |
 
 Sell and Earn are the product today. Invest and Hire are what make it a company rather than a
@@ -57,12 +57,33 @@ loosen a limit, and the owner can always withdraw.
 `IVenue` is the adapter interface a real yield venue plugs into. Its three functions map almost
 exactly onto Aave, which went live on X Layer on 30 March 2026 and accepts USDT0 supply.
 
-**Not done:** no venue adapter is written, nothing sweeps revenue into the vault automatically, and
-the contract is unaudited hackathon code. Testnet only until that changes.
+**Honest state, after an audit of the code rather than the intent:**
 
-**Where this goes:** X Layer is where OKX is building lending, stablecoins, RWAs and yield markets
-together. A business earning USDT0 there is already in the right place to hold tokenised assets
-rather than only cash. That is the difference between getting paid and running a balance sheet.
+| | |
+|---|---|
+| Contract written and unit tested | Yes |
+| Deployed to X Layer | **No** |
+| `VAULT_ADDRESS` / `OPERATOR_PRIVATE_KEY` configured | **No.** `treasuryMode()` returns `not-configured` |
+| A venue adapter implementing `IVenue` | **No.** Only the interface and a test mock |
+| Revenue reaching the vault | **No** |
+| Audited | **No** |
+
+The dashboard's treasury panel works today only in offline mode, where `simulateRevenue()` moves a
+simulated balance. That function is guarded by `if (OFFLINE)` and does nothing in live mode.
+
+**The missing link, and it is smaller than it looks.** The vault has no deposit function on purpose:
+`idle()` is simply the vault's own token balance. So money arrives by ordinary ERC-20 transfer, and
+x402 already pays a route's `payTo` address directly. **Setting `payTo` to the vault address makes
+every paid call a deposit**, and the sweep and bill machinery starts operating on real revenue. That
+is one configuration value, not new plumbing.
+
+What genuinely remains: deploy the vault, write an Aave adapter against `IVenue`, wire the operator
+key, and get the contract audited before it holds anything that matters.
+
+**Where this goes.** X Layer is where OKX is building lending, stablecoins, RWAs and yield markets
+together. A business earning USDT0 there is already positioned to hold tokenised assets rather than
+only cash. That is the difference between getting paid and running a balance sheet, and it is the
+reason Invest belongs in the product rather than in a nice-to-have list.
 
 ## Hire
 

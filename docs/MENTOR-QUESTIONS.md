@@ -69,3 +69,31 @@ Escrow Payment is listed as "coming soon" in the payment docs while A2A delivery
 describes escrow on X Layer with a one-day dispute window and a 5% bounty deposit. Are A2A
 escrow and Subscription Payment both usable today, or is A2A currently limited to particular
 partners?
+
+---
+
+**7. No stablecoin bridge route reaches X Layer**
+
+Through OKX's own cross-chain aggregator, no quote returns a usable route into X Layer for a
+stablecoin: Base USDC, Ethereum USDT, BSC USDT, Arbitrum USDC and Polygon USDT all return either
+"Insufficient liquidity" or "no path", at $50, $100 and $1000. Five bridges list X Layer as a
+destination but none quotes.
+
+That means a new buyer cannot fund an X Layer wallet by bridging, and the only route is an OKX
+exchange account plus a withdrawal over the X Layer network. Is bridge liquidity planned, and is
+there a funding path for buyers who do not hold an OKX account?
+
+---
+
+**8. The Onchain OS installer cannot run on Windows PowerShell 5.1**
+
+`lib/install.ps1` is UTF-8 without a BOM and contains em dashes from line 1. PowerShell 5.1 reads a
+BOM-less file as ANSI, the em dash becomes a sequence containing a double quote, and every block
+after it unbalances. Saving the file with a BOM fixes it completely.
+
+This blocks ASP registration for every Windows builder on the default shell. Happy to send the
+exact parse errors and the one-line fix.
+
+---
+
+Full measurements and reproductions: `docs/ECOSYSTEM.md`.
