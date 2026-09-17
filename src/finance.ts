@@ -61,7 +61,7 @@ export async function sanctionsList(): Promise<{ list: SdnEntry[]; fetchedAt: st
     return { list: sdnMemo.list, fetchedAt: cached.fetched_at };
   }
   try {
-    const r = await fetch(SDN_URL);
+    const r = await fetch(SDN_URL, { signal: AbortSignal.timeout(25_000) });
     if (!r.ok) throw new Error(`OFAC list returned ${r.status}`);
     const list = parseSdn(await r.text());
     if (list.length < 100) throw new Error("OFAC list looked incomplete");
@@ -74,6 +74,20 @@ export async function sanctionsList(): Promise<{ list: SdnEntry[]; fetchedAt: st
     throw e;
   }
 }
+/**
+ * Pull the sanctions list into cache in the background at startup.
+ * Never throws and never blocks boot: if it fails the next request falls back to the normal
+ * fetch-or-cache path, which is exactly the old behaviour.
+ */
+export function warmSanctions() {
+  // Tests spawn the real server, and a boot time download of the OFAC list makes every run slow
+  // and dependent on treasury.gov being up. They opt out.
+  if (process.env.VENDO_SKIP_WARM === "1") return;
+  sanctionsList()
+    .then((r) => console.log(`  Sanctions list ready: ${r.list.length} entries, fetched ${r.fetchedAt}`))
+    .catch((e) => console.warn(`  Sanctions list not warmed: ${String(e?.message ?? e)}. First call will fetch it.`));
+}
+
 /** Seed or replace the list manually (tests, air-gapped deployments). */
 export function loadSanctionsCsv(csv: string) {
   const list = parseSdn(csv); const at = new Date().toISOString();

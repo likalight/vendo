@@ -24,6 +24,7 @@ import { llmEnabled } from "./llm.js";
 import { inspectPage, verifyOwnership, formToBusiness, submitForm, verificationToken, assertPublicHttps } from "./web-agent.js";
 import * as treasury from "./treasury.js";
 import { runChecks, uptime, startHealthLoop } from "./health.js";
+import { warmSanctions } from "./finance.js";
 import { listBills, addBill, setActive, runDueBills, startBillLoop } from "./bills.js";
 import { handleMcp } from "./mcp.js";
 import { requireAdmin, requireAssist, rateLimit } from "./security.js";
@@ -51,14 +52,17 @@ function buildRoutes() {
   const routes: Record<string, any> = {};
   for (const b of listBusinesses().filter((x) => x.status !== "paused")) {
     for (const r of b.routes) {
-      routes[`${r.method} /${b.id}${r.path}`] = {
-        accepts: [{ scheme: "exact", network: env.network.caip2, payTo: payToFor(b), price: `$${r.priceUsd}` }],
+      // Free routes and free tiers are deliberately left out of the paywall so they fall through
+      // to the handler and answer 200. A $0 challenge would be a 402 asking for nothing.
+      if (r.priceUsd > 0) routes[`${r.method} /${b.id}${r.path}`] = {
+        accepts: [{ scheme: "exact", network: env.network.caip2, payTo: payToFor(b), price: `${r.priceUsd}` }],
         description: `${b.title}: ${r.summary}`,
         mimeType: "application/json",
       };
       for (const tier of r.tiers ?? []) {
+        if (tier.priceUsd <= 0) continue;
         routes[`${r.method} /${b.id}/t/${tier.name}${r.path}`] = {
-          accepts: [{ scheme: "exact", network: env.network.caip2, payTo: payToFor(b), price: `$${tier.priceUsd}` }],
+          accepts: [{ scheme: "exact", network: env.network.caip2, payTo: payToFor(b), price: `${tier.priceUsd}` }],
           description: `${b.title}: ${r.summary} (${tier.name}: ${tier.includes})`,
           mimeType: "application/json",
         };
@@ -679,6 +683,7 @@ async function counterpartyCheck(q: Record<string, string>, tier = "standard") {
 
 startHealthLoop();
 startBillLoop();
+warmSanctions();
 
 app.listen(env.port, () => {
   console.log(`\nVendo${OFFLINE ? " [OFFLINE DEMO — no real payments]" : ""} on ${env.publicUrl} — ${env.networkName} (chain ${env.network.chainId}) · LLM: ${llmEnabled() ? "on" : "off"}`);

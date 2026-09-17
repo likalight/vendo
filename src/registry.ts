@@ -62,7 +62,7 @@ export function validateBusiness(input: any): { ok: true; value: Business } | { 
   routes.forEach((r, i) => {
     if (!["GET", "POST"].includes(r.method)) e.push(`route ${i + 1}: method must be GET or POST`);
     if (!String(r.path ?? "").startsWith("/")) e.push(`route ${i + 1}: path must start with /`);
-    if (!(Number(r.priceUsd) > 0 && Number(r.priceUsd) <= 100)) e.push(`route ${i + 1}: priceUsd must be between 0 and 100`);
+    if (!(Number(r.priceUsd) >= 0 && Number(r.priceUsd) <= 100)) e.push(`route ${i + 1}: priceUsd must be between 0 and 100. Use 0 for a free route.`);
     if (!r.summary) e.push(`route ${i + 1}: summary is required`);
     r.params = Array.isArray(r.params) ? r.params : [];
     if (r.tiers != null) {
@@ -71,7 +71,7 @@ export function validateBusiness(input: any): { ok: true; value: Business } | { 
       (r.tiers ?? []).forEach((tr: any) => {
         if (!["basic", "standard", "premium"].includes(tr?.name)) e.push(`route ${i + 1}: tier name must be basic, standard or premium`);
         if (seen.has(tr?.name)) e.push(`route ${i + 1}: duplicate tier ${tr?.name}`); seen.add(tr?.name);
-        if (!(Number(tr?.priceUsd) > 0 && Number(tr?.priceUsd) <= 100)) e.push(`route ${i + 1}: tier ${tr?.name} needs a price between 0 and 100`);
+        if (!(Number(tr?.priceUsd) >= 0 && Number(tr?.priceUsd) <= 100)) e.push(`route ${i + 1}: tier ${tr?.name} needs a price between 0 and 100. Use 0 for a free tier.`);
         if (!tr?.includes || String(tr.includes).length > 140) e.push(`route ${i + 1}: tier ${tr?.name} needs a short description of what it includes`);
       });
       if (!r.tiers?.length) delete r.tiers;

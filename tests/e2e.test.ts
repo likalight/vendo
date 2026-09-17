@@ -28,7 +28,7 @@ const post = (p: string, body: unknown, h: Record<string, string> = admin) => fe
 before(async () => {
   server = spawn(process.execPath, [tsxCli, "src/app.ts"], {
     cwd: process.cwd(), stdio: "ignore",
-    env: { ...process.env, VENDO_OFFLINE: "1", PORT: String(PORT), PUBLIC_URL: BASE, VENDO_DB: join(dir, "vendo.db"),
+    env: { ...process.env, VENDO_OFFLINE: "1", VENDO_SKIP_WARM: "1", PORT: String(PORT), PUBLIC_URL: BASE, VENDO_DB: join(dir, "vendo.db"),
       OKX_API_KEY: "t", OKX_SECRET_KEY: "t", OKX_PASSPHRASE: "t", MPPX_SECRET_KEY: "dGVzdHNlY3JldGtleXRlc3RzZWNyZXQ=",
       DEFAULT_PAY_TO: "0x1111111111111111111111111111111111111111", VENDO_TREASURY_WALLET: "0x2222222222222222222222222222222222222222",
       VENDO_ADMIN_TOKEN: ADMIN, VENDO_ASSIST_TOKEN: ASSIST, HEALTH_CHECK_MINUTES: "0", BILL_CHECK_MINUTES: "0" },
@@ -185,10 +185,13 @@ test("security: internal addresses are refused for API base URLs and OpenAPI imp
 });
 
 test("tiers: each tier has its own price and changes what the service returns", async () => {
-  assert.equal((await (await get("/counterparty/t/basic/check?name=Acme")).json()).price, "$0.01");
-  assert.equal((await (await get("/counterparty/t/premium/check?name=Acme")).json()).price, "$0.08");
+  // The basic tier is free, so it is deliberately not behind the paywall: it answers 200 with the
+  // result and never a 402. src/validate.ts treats that as a compliant A2MCP shape.
+  const free = await get("/counterparty/t/basic/check?name=Acme");
+  assert.equal(free.status, 200, "the free tier answers straight away, with no payment step");
+  assert.equal((await (await get("/counterparty/t/premium/check?name=Acme")).json()).price, "$0.3");
   assert.equal((await get("/counterparty/t/gold/check?name=Acme")).status, 404);
-  const basic = await (await get("/counterparty/t/basic/check?name=Acme%20Widgets", { "x-vendo-demo-paid": "1" })).json();
+  const basic = await (await get("/counterparty/t/basic/check?name=Acme%20Widgets")).json();
   assert.equal(basic.tier, "basic");
   assert.equal(basic.registry, undefined, "basic is sanctions only");
   const premium = await (await get("/counterparty/t/premium/check?name=Acme%20Widgets", { "x-vendo-demo-paid": "1" })).json();

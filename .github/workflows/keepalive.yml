@@ -1,44 +1,78 @@
 name: Keep alive
 
-# The service runs on a Render free plan, which sleeps after about 15 minutes idle and
-# cold-starts on the next request. A sleeping instance answers the first call with a 404,
-# which is enough to fail OKX AI listing review and to dent the uptime we report on /proof.
-# This pings /health often enough that it never sleeps.
+# The service runs on a Render free plan. It sleeps after about 15 minutes idle and cold starts on
+# the next request, and because the free plan has no persistent disk, every restart also wipes
+# data/: the sales ledger, listing statuses and uptime history all go with it.
 #
-# GitHub's scheduler is best effort and can run late under load, so the interval is set
-# tighter than the 15 minute sleep window to leave room for drift.
+# The previous version of this file scheduled a single ping every 10 minutes. GitHub throttles
+# scheduled workflows on free runners, and in practice it fired at 19:59, 22:54 and 01:13, gaps of
+# over two hours. One ping per run cannot cover a 15 minute sleep window at that cadence.
+#
+# So each run now pings continuously for 25 minutes instead of once. Combined with the schedule,
+# coverage is far better than a single ping, and the runs queue rather than pile up.
+#
+# This is a bridge, not the fix. The fix is a Render plan with a persistent disk, which stops the
+# wipe rather than working around the sleep. Second best is an external uptime monitor
+# (UptimeRobot, cron-job.org, Better Stack all do 5 minute intervals free), which is not subject
+# to GitHub's scheduler throttling.
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
+
+# Queue rather than cancel: an overlapping run still adds coverage, a cancelled one does not.
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: https://vendo-pfm3.onrender.com
     steps:
-      - name: Ping health
+      - name: Wake the service
         run: |
-          URL="https://vendo-pfm3.onrender.com/health"
           for attempt in 1 2 3; do
-            code=$(curl -s -o /tmp/body.json -w "%{http_code}" --max-time 60 "$URL" || echo 000)
+            code=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 90 "$BASE/health" || echo 000)
             if [ "$code" = "200" ]; then
-              echo "OK on attempt $attempt"
-              cat /tmp/body.json
+              echo "awake on attempt $attempt"
+              cat /tmp/health.json
               exit 0
             fi
             echo "attempt $attempt returned $code, retrying"
             sleep 20
           done
           echo "Health check failed three times. The service may be down."
-          cat /tmp/body.json || true
+          cat /tmp/health.json 2>/dev/null || true
           exit 1
 
       - name: Confirm the paywall still answers 402
         run: |
-          URL="https://vendo-pfm3.onrender.com/counterparty/sanctions?name=Example"
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$URL" || echo 000)
+          # A listed A2MCP endpoint must answer 402 when unpaid. If this changes the listing is at
+          # risk, and we want to know before OKX does.
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
+            "$BASE/counterparty/sanctions?name=Example" || echo 000)
           echo "unpaid call returned $code"
-          # A listed A2MCP endpoint must answer 402 when unpaid. If this changes, the
-          # listing is at risk and we want to know before OKX does.
           [ "$code" = "402" ] || exit 1
+
+      - name: Confirm the free tier still answers 200
+        run: |
+          # The free tier is not behind the paywall on purpose. If it ever starts asking for
+          # payment, or stops answering, the cheapest way for an agent to try Vendo is broken.
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
+            "$BASE/counterparty/t/basic/check?name=Example" || echo 000)
+          echo "free tier returned $code"
+          [ "$code" = "200" ] || exit 1
+
+      - name: Hold it awake for 25 minutes
+        run: |
+          # 25 pings a minute apart. The sleep window is about 15 minutes, so this covers the gap
+          # between scheduled runs even when GitHub delays the next one.
+          for i in $(seq 1 25); do
+            sleep 60
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 "$BASE/health" || echo 000)
+            echo "ping $i: $code"
+          done
