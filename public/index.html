@@ -115,7 +115,11 @@ h3{font-size:20px;line-height:1.3}
   overflow:hidden}
 .p{background:var(--bg);padding:30px}
 .p:first-child{background:var(--panel)}
-.p h3{margin-bottom:10px}
+.p-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.p-head .tag{font:400 12px var(--mono);color:var(--faint);border:1px solid var(--line);
+  border-radius:999px;padding:3px 11px;white-space:nowrap}
+.p-head .tag.live{color:var(--accent);border-color:var(--accent-line)}
+.p h3{margin-bottom:0}
 .p>p{color:var(--muted);font-size:15px;margin:0}
 .p ul{margin:18px 0 0;padding:0;list-style:none}
 .p li{font:400 13px/1.6 var(--mono);color:var(--faint);padding:9px 0;
@@ -236,15 +240,15 @@ fills in the details, and pays it. Press Ask to hit the live endpoint.</div>
     </div>
   </section>
 
-  <!-- FOUR PILLARS -->
+  <!-- WHAT A BUSINESS DOES -->
   <section class="pillars">
     <div class="wrap">
-      <p class="label">discovery, services, collaboration, monetisation</p>
-      <h2 style="margin-top:14px">How Vendo answers each one</h2>
+      <p class="eyebrow">sell, earn, invest, hire</p>
+      <h2>Everything a company does, without leaving OKX AI</h2>
       <div class="p-grid">
 
         <div class="p">
-          <h3>Services</h3>
+          <div class="p-head"><h3>Sell</h3><span class="tag live">live</span></div>
           <p>Whatever you have becomes something an agent can call.</p>
           <ul>
             <li><b>Have an API.</b> Import an OpenAPI file, or add routes by hand.</li>
@@ -254,37 +258,38 @@ fills in the details, and pays it. Press Ask to hit the live endpoint.</div>
         </div>
 
         <div class="p">
-          <h3>Monetisation</h3>
-          <p>Paid per call, settled on X Layer, straight to your wallet.</p>
+          <div class="p-head"><h3>Earn</h3><span class="tag live">live</span></div>
+          <p>Paid per call in USDT0 on X Layer, straight to your wallet.</p>
           <ul>
-            <li><b>Per call in USDT0.</b> A price per route, or up to three tiers.</li>
-            <li><b>Prepaid packs.</b> Sell 25 or 100 calls at a discount.</li>
+            <li><b>Per call.</b> A price per route, up to three tiers, or prepaid packs.</li>
+            <li><b>Signed receipts.</b> Every answer carries proof anyone can verify.</li>
             <li><b>Vendo never holds it.</b> Buyers pay your address directly.</li>
           </ul>
         </div>
 
         <div class="p">
-          <h3>Discovery</h3>
-          <p>Found by agents automatically, and by people from any page.</p>
+          <div class="p-head"><h3>Hire</h3><span class="tag live">live</span></div>
+          <p>Your agent buys from other agents, and you buy from your browser.</p>
           <ul>
-            <li><b>Ask in English.</b> One question, one price, one answer. Vendo picks the service.</li>
-            <li><b>Agent readable.</b> MCP server, OpenAPI and llms.txt per store.</li>
-            <li><b>Browser extension.</b> Select text anywhere, get a service that fits.</li>
-            <li><b>Public feed.</b> Uptime, prices and seller level, open to anyone.</li>
+            <li><b>Ask in English.</b> One question, one price, one answer.</li>
+            <li><b>Vendo Assist.</b> Select text on any page, pay from a capped wallet.</li>
+            <li><b>Hand off.</b> Bigger jobs go to OKX AI's task market with a full brief.</li>
           </ul>
         </div>
 
         <div class="p">
-          <h3>Collaboration</h3>
-          <p>When one call is not enough, Vendo hands the job to OKX AI.</p>
+          <div class="p-head"><h3>Invest</h3><span class="tag">building</span></div>
+          <p>Revenue sitting in a wallet is doing nothing. Put it to work.</p>
           <ul>
-            <li><b>No competing.</b> Custom work belongs in OKX AI's task market.</li>
-            <li><b>A full brief.</b> Title, description, budget, deadline, matching.</li>
-            <li><b>Your agent posts it.</b> Negotiation and escrow stay with OKX.</li>
+            <li><b>Business owned vault.</b> Sweep idle cash above a buffer into approved venues.</li>
+            <li><b>Hard limits.</b> Automation can never pay an unapproved address or raise a cap.</li>
+            <li><b>On X Layer.</b> Aave went live there in March and accepts USDT0.</li>
           </ul>
         </div>
 
       </div>
+      <p class="sub" style="margin-top:20px">Sell and earn are live today. Invest has the vault and
+        the venue interface, and needs an adapter and an audit before it touches real money.</p>
     </div>
   </section>
 

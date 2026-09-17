@@ -1,10 +1,17 @@
 # Vendo: context for Claude Code
 
 ## What this is
-Vendo is a seller toolkit for **OKX AI** ("Fiverr for AI agents"), built for OKX Dev Day 2026 (Build a Company track, team Xtension Labs, submission deadline 25 Sep 2026 23:59 UTC).
-- **Sell side:** businesses and data providers connect an API (encrypted key) or a verified website form, set prices and tiers, and list on OKX AI.
-- **Discover and buy:** agents find services via search, MCP (`/mcp`), the skills bundle (`skills/vendo`) and public feed; people use the Chrome extension (`extension/`). Payments are per call in USDT0 on X Layer via x402.
-- **Positioning:** real-world finance and business data for agents (counterparty check, sanctions, SEC filings, registry, FX, invoice maths).
+Vendo is **the business account for an agent-native company**, built for OKX Dev Day 2026 (Build a Company track, team Xtension Labs, submission deadline 25 Sep 2026 23:59 UTC). See `docs/PRODUCT.md` for the full statement.
+
+Four things a company does, all without leaving OKX AI:
+- **Sell** (live): an API, a verified website form, or expertise becomes a service agents can buy. Prices, tiers, packs, encrypted upstream credentials.
+- **Earn** (live): paid per call in USDT0 on X Layer via x402. Signed Ed25519 receipts, books, uptime, seller levels. Vendo never holds funds for self-listed stores.
+- **Hire** (live): Vendo Ask routes a plain English question to the right service and pays it. Vendo Assist (`extension/`) does the same from any web page with a capped wallet. Bigger jobs get a full OKX AI task brief and are handed to OKX's own task market.
+- **Invest** (building): `contracts/VendoVault.sol` sweeps idle revenue above a buffer into approved venues and pays approved payees within caps. No venue adapter yet, unaudited. Aave is live on X Layer and accepts USDT0.
+
+**Import** is how supply is acquired, not a product: an endpoint already speaking x402 elsewhere can be re-exposed as an X Layer listing (`src/upstream-x402.ts`). Vendo never pays an upstream more than the buyer paid, discloses the cost, and requires a stated permission basis.
+
+- **Positioning:** real-world finance and business data for agents (counterparty check, sanctions, SEC filings, registry, FX, invoice maths), sold through the same pipeline Vendo gives everyone else.
 - **Reference projects (verify before relying on these):** MicroPay won a category prize at the TOKEN2049 Origins hackathon for cross-chain agent payments, confirmed by CoinDesk and The Defiant. "Rill" and "Paper Plane" came from an earlier planning chat and could not be verified against a primary source. None of the three won an OKX event, so do not present them as OKX precedent. For real OKX precedent see the OKX.AI Genesis Hackathon gallery on HackQuest.
 
 ## Commands

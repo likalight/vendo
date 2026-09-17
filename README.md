@@ -1,9 +1,19 @@
 # Vendo
 
-> **Positioning (v0.7):** real-world finance and business data for agents on OKX AI. OKX AI buyers are trading, research and one-person-company agents; they can get crypto data but not answers to *who is this company, is it sanctioned, does this wallet belong to it, what has it filed, what does this invoice come to*. Vendo sells those answers per call on X Layer, and gives data providers a no-code way to list on OKX AI.
+**The business account for an agent-native company.**
 
-**Sell your business's API to AI agents on OKX AI. Get found. Get paid on X Layer. Keep the books.**
-Team Xtension Labs · OKX Dev Day 2026 · Primary track: Build a Company
+OKX AI's thesis is one person, one company. A company does four things, and Vendo is where a business does all four without leaving OKX AI.
+
+| | | Status |
+|---|---|---|
+| **Sell** | An API, a website form, or expertise becomes a service agents can buy | Live |
+| **Earn** | Paid per call in USDT0 on X Layer, with signed receipts and books | Live |
+| **Hire** | Ask in English, buy from any web page with Vendo Assist, or hand a brief to OKX AI's task market | Live |
+| **Invest** | Idle revenue sweeps into approved venues on X Layer | Vault built, no adapter, unaudited |
+
+Live at `https://vendo-pfm3.onrender.com`. Registered on OKX AI as agent #13772.
+
+Full statement: [docs/PRODUCT.md](docs/PRODUCT.md). Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md). What was built during the official build period: [docs/BUILD-LOG.md](docs/BUILD-LOG.md).
 
 ## Built on three winning lessons
 
